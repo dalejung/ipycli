@@ -45,7 +45,9 @@ data-read-only={{read_only}}
         {% end %}
 
         <div id="notebook_list">
-            <div id="project_name"><h2>{{project}}</h2></div>
+            <div class="project-notebook-list" project="{{project}}">
+                <div class="project_name"><h2>{{project}}</h2></div>
+            </div>
         </div>
     </div>
     <div id="tab2">
