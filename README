@@ -1,0 +1,4 @@
+IPython subapp that supports adding arbitrary notebooks from the command line. 
+It supports the normal notebook directory use. 
+Files added via the CLI will create their own notebook list on the project page. 
+
