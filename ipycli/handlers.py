@@ -279,6 +279,8 @@ class NamedNotebookHandler(AuthenticatedHandler):
     def get(self, notebook_id):
         nbm = self.application.notebook_manager
         project = nbm.notebook_dir
+
+        notebook_path = nbm.find_path(notebook_id)
         if not nbm.notebook_exists(notebook_id):
             raise web.HTTPError(404, u'Notebook does not exist: %s' % notebook_id)
         
@@ -287,7 +289,7 @@ class NamedNotebookHandler(AuthenticatedHandler):
             notebook_id=notebook_id,
             base_project_url=self.application.ipython_app.base_project_url,
             base_kernel_url=self.application.ipython_app.base_kernel_url,
-            notebook_path=None,
+            notebook_path=notebook_path,
             kill_kernel=False,
             read_only=self.read_only,
             logged_in=self.logged_in,

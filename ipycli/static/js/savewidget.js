@@ -128,9 +128,8 @@ var IPython = (function (IPython) {
     SaveWidget.prototype.update_url = function () {
         var notebook_id = IPython.notebook.get_notebook_id();
         var notebook_path = IPython.notebook.notebook_path;
-        if (notebook_id !== null && !notebook_path) {
+        if (notebook_id !== null) {
             var new_url = $('body').data('baseProjectUrl') + notebook_id;
-            // TODO, figure out why this is here.
             window.history.replaceState({}, '', new_url);
         };
     };

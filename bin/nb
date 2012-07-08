@@ -4,15 +4,16 @@ import urllib2
 import urllib
 
 PORT = 8888
+HOST = "127.0.0.1"
 
-def open_url(nbpath, port=PORT):
+def open_url(nbpath, host=HOST, port=PORT):
     nbpath = urllib.quote_plus(nbpath)
-    url = "http://127.0.0.1:%d/n/%s" % (port, nbpath)
+    url = "http://%s:%d/n/%s" % (host, port, nbpath)
     urllib2.urlopen(url)
 
-def new_url(nbpath, port=PORT):
+def new_url(nbpath, host=HOST, port=PORT):
     nbpath = urllib.quote_plus(nbpath)
-    url = "http://127.0.0.1:%d/new/%s" % (port, nbpath)
+    url = "http://%s:%d/new/%s" % (host, port, nbpath)
     urllib2.urlopen(url)
 
 def open_notebook(fullpath):

@@ -197,9 +197,6 @@ var IPython = (function (IPython) {
         item.data('notebook_id', notebook_id);
         var new_item_name = $('<span/>').addClass('item_name');
         var href = $('body').data('baseProjectUrl')+notebook_id;
-        if (nbname.indexOf('/') != -1){
-          href = '/n/'+nbname;
-        }
         new_item_name.append(
             $('<a/>').
             attr('href', href).
