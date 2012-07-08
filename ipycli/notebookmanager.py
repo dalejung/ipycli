@@ -21,6 +21,8 @@ import io
 import os
 import uuid
 import glob
+import itertools
+import os.path
 
 from tornado import web
 
@@ -65,6 +67,8 @@ class NotebookManager(LoggingConfigurable):
     mapping = Dict()
     # Map notebook names to notebook_ids
     rev_mapping = Dict()
+    # path mapping
+    path_mapping = Dict()
 
     def list_notebooks(self):
         """List all notebooks in the notebook dir.
@@ -78,6 +82,7 @@ class NotebookManager(LoggingConfigurable):
         names = [os.path.splitext(os.path.basename(name))[0]
                  for name in names]
 
+        names = itertools.chain(names, self.path_mapping.values())
         data = []
         for name in names:
             if name not in self.rev_mapping:
@@ -85,8 +90,34 @@ class NotebookManager(LoggingConfigurable):
             else:
                 notebook_id = self.rev_mapping[name]
             data.append(dict(notebook_id=notebook_id,name=name))
+
         data = sorted(data, key=lambda item: item['name'])
         return data
+
+    def file_exists(self, path):
+        try:
+            with open(path) as f: pass
+            return True
+        except:
+            return False
+
+    def pathed_notebook_id(self, path):
+        if path not in self.rev_mapping:
+            notebook_id = self.new_notebook_id(path)
+            self.path_mapping[notebook_id] = path
+        else:
+            notebook_id = self.rev_mapping[path]
+        return notebook_id
+
+
+    def get_pathed_notebook(self, path):
+        file_exists = self.file_exists(path)
+        if not file_exists:
+            return False
+
+        notebook_id = self.pathed_notebook_id(path)
+        return notebook_id
+
 
     def new_notebook_id(self, name):
         """Generate a new notebook_id for a name and store its mappings."""
@@ -120,6 +151,13 @@ class NotebookManager(LoggingConfigurable):
 
     def find_path(self, notebook_id):
         """Return a full path to a notebook given its notebook_id."""
+        # first try path mapping
+        try:
+            path = self.path_mapping[notebook_id]
+            return path
+        except:
+            pass
+
         try:
             name = self.mapping[notebook_id]
         except KeyError:
@@ -128,6 +166,9 @@ class NotebookManager(LoggingConfigurable):
 
     def get_path_by_name(self, name):
         """Return a full path to a notebook given its name."""
+        # check if we are already a full path
+        if name in self.path_mapping.values():
+            return name
         filename = name + self.filename_ext
         path = os.path.join(self.notebook_dir, filename)
         return path       
@@ -208,9 +249,12 @@ class NotebookManager(LoggingConfigurable):
         """Save an existing notebook object by notebook_id."""
         if notebook_id not in self.mapping:
             raise web.HTTPError(404, u'Notebook does not exist: %s' % notebook_id)
+
+        # Try to get a full pathname first
         old_name = self.mapping[notebook_id]
+
         try:
-            new_name = nb.metadata.name
+            new_name = nb.metadata.notebook_path or nb.metadata.name
         except AttributeError:
             raise web.HTTPError(400, u'Missing notebook name')
         path = self.get_path_by_name(new_name)
@@ -228,8 +272,20 @@ class NotebookManager(LoggingConfigurable):
             except Exception as e:
                 raise web.HTTPError(400, u'Unexpected error while saving notebook as script: %s' % e)
         
+        old_path = self.get_path_by_name(old_name)
+
+        print 'saving ', old_name, new_name
+        print 'saving ', path, notebook_id
+
+        # There are cases where a named and pathed notebook
+        # can exist in the same nbm and share the same file
+        # so stop here before deleting
+        # TODO figure out a way to handle this.
+        if old_path == new_name or path == old_name:
+            return
+
         if old_name != new_name:
-            old_path = self.get_path_by_name(old_name)
+            print 'deleting'
             if os.path.isfile(old_path):
                 os.unlink(old_path)
             if self.save_script:
@@ -265,10 +321,15 @@ class NotebookManager(LoggingConfigurable):
                 i = i+1
         return path, name
 
-    def new_notebook(self):
+    def new_notebook(self, path=None):
         """Create a new notebook and return its notebook_id."""
-        path, name = self.increment_filename('Untitled')
-        notebook_id = self.new_notebook_id(name)
+        if path is None:
+            path, name = self.increment_filename('Untitled')
+            notebook_id = self.new_notebook_id(name)
+        else:
+            name = os.path.split(path)[1]
+            notebook_id = self.pathed_notebook_id(path)
+
         metadata = current.new_metadata(name=name)
         nb = current.new_notebook(metadata=metadata)
         with open(path,'w') as f:

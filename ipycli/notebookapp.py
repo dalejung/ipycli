@@ -48,7 +48,8 @@ from .handlers import (LoginHandler, LogoutHandler,
     MainKernelHandler, KernelHandler, KernelActionHandler, IOPubHandler,
     ShellHandler, NotebookRootHandler, NotebookHandler, NotebookCopyHandler,
     RSTHandler, AuthenticatedFileHandler, PrintNotebookHandler,
-    MainClusterHandler, ClusterProfileHandler, ClusterActionHandler
+    MainClusterHandler, ClusterProfileHandler, ClusterActionHandler,
+    PathedNotebookHandler
 )
 from .notebookmanager import NotebookManager
 from .clustermanager import ClusterManager
@@ -75,6 +76,7 @@ from IPython.utils import py3compat
 _kernel_id_regex = r"(?P<kernel_id>\w+-\w+-\w+-\w+-\w+)"
 _kernel_action_regex = r"(?P<action>restart|interrupt)"
 _notebook_id_regex = r"(?P<notebook_id>\w+-\w+-\w+-\w+-\w+)"
+_notebook_path_regex = r"(?P<notebook_path>\w+-\w+-\w+-\w+-\w+)"
 _profile_regex = r"(?P<profile>[^\/]+)" # there is almost no text that is invalid
 _cluster_action_regex = r"(?P<action>start|stop)"
 
@@ -124,6 +126,7 @@ class NotebookWebApplication(web.Application):
             (r"/login", LoginHandler),
             (r"/logout", LogoutHandler),
             (r"/new", NewHandler),
+            (r"/new/(.*)", NewHandler),
             (r"/%s" % _notebook_id_regex, NamedNotebookHandler),
             (r"/%s/copy" % _notebook_id_regex, NotebookCopyHandler),
             (r"/%s/print" % _notebook_id_regex, PrintNotebookHandler),
@@ -139,6 +142,8 @@ class NotebookWebApplication(web.Application):
             (r"/clusters", MainClusterHandler),
             (r"/clusters/%s/%s" % (_profile_regex, _cluster_action_regex), ClusterActionHandler),
             (r"/clusters/%s" % _profile_regex, ClusterProfileHandler),
+
+            (r"/n/(.*)", PathedNotebookHandler),
         ]
         settings = dict(
             template_path=os.path.join(os.path.dirname(__file__), "templates"),
@@ -481,6 +486,8 @@ class NotebookApp(BaseIPythonApplication):
         """SIGINT handler spawns confirmation dialog"""
         # register more forceful signal handler for ^C^C case
         signal.signal(signal.SIGINT, self._signal_stop)
+        ioloop.IOLoop.instance().stop()
+        return
         # request confirmation dialog in bg thread, to avoid
         # blocking the App
         thread = threading.Thread(target=self._confirm_exit)

@@ -255,15 +255,16 @@ class LogoutHandler(AuthenticatedHandler):
 class NewHandler(AuthenticatedHandler):
 
     @web.authenticated
-    def get(self):
+    def get(self, path=None):
         nbm = self.application.notebook_manager
         project = nbm.notebook_dir
-        notebook_id = nbm.new_notebook()
+        notebook_id = nbm.new_notebook(path=path)
         self.render(
             'notebook.html', project=project,
             notebook_id=notebook_id,
             base_project_url=self.application.ipython_app.base_project_url,
             base_kernel_url=self.application.ipython_app.base_kernel_url,
+            notebook_path=None,
             kill_kernel=False,
             read_only=False,
             logged_in=self.logged_in,
@@ -284,6 +285,31 @@ class NamedNotebookHandler(AuthenticatedHandler):
         self.render(
             'notebook.html', project=project,
             notebook_id=notebook_id,
+            base_project_url=self.application.ipython_app.base_project_url,
+            base_kernel_url=self.application.ipython_app.base_kernel_url,
+            notebook_path=None,
+            kill_kernel=False,
+            read_only=self.read_only,
+            logged_in=self.logged_in,
+            login_available=self.login_available,
+            mathjax_url=self.application.ipython_app.mathjax_url,
+        )
+
+class PathedNotebookHandler(AuthenticatedHandler):
+
+    @authenticate_unless_readonly
+    def get(self, notebook_path):
+        print notebook_path
+        nbm = self.application.notebook_manager
+        project = nbm.notebook_dir
+        notebook_id = nbm.get_pathed_notebook(notebook_path)
+        if not notebook_id:
+            raise web.HTTPError(404, u'Notebook does not exist: %s' % notebook_id)
+        
+        self.render(
+            'notebook.html', project=project,
+            notebook_id=notebook_id,
+            notebook_path=notebook_path,
             base_project_url=self.application.ipython_app.base_project_url,
             base_kernel_url=self.application.ipython_app.base_kernel_url,
             kill_kernel=False,
