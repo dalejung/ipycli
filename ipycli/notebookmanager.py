@@ -82,7 +82,8 @@ class NotebookManager(LoggingConfigurable):
         names = [os.path.splitext(os.path.basename(name))[0]
                  for name in names]
 
-        names = itertools.chain(names, self.path_mapping.values())
+        pathed_notebooks = self.pathed_notebook_list()
+        names = itertools.chain(names, pathed_notebooks)
         data = []
         for name in names:
             if name not in self.rev_mapping:
@@ -93,6 +94,20 @@ class NotebookManager(LoggingConfigurable):
 
         data = sorted(data, key=lambda item: item['name'])
         return data
+
+    def pathed_notebook_list(self):
+        self.verify_pathed_files()
+        paths = self.path_mapping.values()
+        return paths
+
+
+    def verify_pathed_files(self):
+        """
+            Verify files exist and remove missing files
+        """
+        for id,path in self.path_mapping.items():
+            if not os.path.isfile(path):
+                del self.path_mapping[id]
 
     def file_exists(self, path):
         try:
