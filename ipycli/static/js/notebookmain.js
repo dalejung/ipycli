@@ -62,7 +62,13 @@ $(document).ready(function () {
         IPython.layout_manager.do_resize();
         IPython.save_widget.update_url();
     })
-    IPython.notebook.load_notebook($('body').data('notebookId'));
+    var notebook_id = $('body').data('notebookId')
+    var notebook_path = $('body').data('notebookPath')
+    if (notebook_path == 'None'){
+        notebook_path = null;
+    }
 
+    IPython.notebook.load_notebook(notebook_id);
+    IPython.notebook.notebook_path = notebook_path;
 });
 

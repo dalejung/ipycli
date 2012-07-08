@@ -58,6 +58,11 @@ var IPython = (function (IPython) {
 
 
     SaveWidget.prototype.rename_notebook = function () {
+        if(IPython.notebook.is_pathed()){
+          alert('Cannot do this with pathed notebook');
+          return;
+        }
+
         var that = this;
         var dialog = $('<div/>');
         dialog.append(
@@ -122,8 +127,10 @@ var IPython = (function (IPython) {
 
     SaveWidget.prototype.update_url = function () {
         var notebook_id = IPython.notebook.get_notebook_id();
-        if (notebook_id !== null) {
+        var notebook_path = IPython.notebook.notebook_path;
+        if (notebook_id !== null && !notebook_path) {
             var new_url = $('body').data('baseProjectUrl') + notebook_id;
+            // TODO, figure out why this is here.
             window.history.replaceState({}, '', new_url);
         };
     };

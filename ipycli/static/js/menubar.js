@@ -46,6 +46,10 @@ var IPython = (function (IPython) {
             IPython.save_widget.rename_notebook();
         });
         this.element.find('#copy_notebook').click(function () {
+          if(IPython.notebook.is_pathed()){
+            alert('Cannot do this with pathed notebook');
+            return;
+          }
             var notebook_id = IPython.notebook.get_notebook_id();
             var url = $('body').data('baseProjectUrl') + notebook_id + '/copy';
             window.open(url,'_newtab');

@@ -29,6 +29,7 @@ var IPython = (function (IPython) {
         this.worksheet_metadata = {};
         this.control_key_active = false;
         this.notebook_id = null;
+        this.notebook_path = null;
         this.notebook_name = null;
         this.notebook_name_blacklist_re = /[\/\\:]/;
         this.nbformat = 3 // Increment this when changing the nbformat
@@ -36,8 +37,15 @@ var IPython = (function (IPython) {
         this.style();
         this.create_elements();
         this.bind_events();
+
     };
 
+    Notebook.prototype.is_pathed = function() {
+      if(!(this.notebook_path)) {
+        return false
+      }
+      return (this.notebook_path.indexOf('/') != -1)
+    }
 
     Notebook.prototype.style = function () {
         $('div#notebook').addClass('border-box-sizing');
@@ -1140,6 +1148,7 @@ var IPython = (function (IPython) {
         // We may want to move the name/id/nbformat logic inside toJSON?
         var data = this.toJSON();
         data.metadata.name = this.notebook_name;
+        data.metadata.notebook_path = this.notebook_path;
         data.nbformat = this.nbformat;
         data.nbformat_minor = this.nbformat_minor;
         // We do the call with settings so we can set cache to false.

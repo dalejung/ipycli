@@ -24,7 +24,6 @@ var IPython = (function (IPython) {
         $('#notebook_toolbar').addClass('list_toolbar');
         $('#drag_info').addClass('toolbar_info');
         $('#notebook_buttons').addClass('toolbar_buttons');
-        $('div#project_name').addClass('list_header ui-widget ui-widget-header');
         $('#refresh_notebook_list').button({
             icons : {primary: 'ui-icon-arrowrefresh-1-s'},
             text : false
@@ -100,24 +99,21 @@ var IPython = (function (IPython) {
     };
 
 
-    NotebookList.prototype.list_loaded = function (data, status, xhr) {
-        var len = data.length;
-        this.clear_list();
-
-        if(len == 0)
-        {
-            $(this.new_notebook_item(0))
-                .append(
-                    $('<div style="margin:auto;text-align:center;color:grey"/>')
-                    .text('Notebook list empty.')
-                    )
+    NotebookList.prototype.project_notebook_list_load = function (project, data) {
+        pdiv = $('.project-notebook-list[project="'+project+'"]')[0];
+        if(!pdiv){
+            pdiv = this.new_project_div(project);
         }
+        var len = data.length;
+
+        pdiv = $(pdiv)    
+        pdiv.children('.list_item').remove();
 
         for (var i=0; i<len; i++) {
             var notebook_id = data[i].notebook_id;
             var nbname = data[i].name;
             var kernel = data[i].kernel_id;
-            var item = this.new_notebook_item(i);
+            var item = this.new_notebook_item(i, pdiv);
             this.add_link(notebook_id, nbname, item);
             if (!IPython.read_only){
                 // hide delete buttons when readonly
@@ -130,8 +126,57 @@ var IPython = (function (IPython) {
         };
     };
 
+    NotebookList.prototype.list_loaded = function (data, status, xhr) {
+        var base_project = $('body').data('project');
+        new_data = this.split_data(data);
+        for (proj in new_data){
+            this.project_notebook_list_load(proj, new_data[proj]);
+        }
+        $('div.project_name').addClass('list_header ui-widget ui-widget-header');
+    }
 
-    NotebookList.prototype.new_notebook_item = function (index) {
+    NotebookList.prototype.split_data = function (data) {
+        new_data = {}
+        var base_project = $('body').data('project');
+        new_data[base_project] = [];
+
+        for(var i=0; i < data.length;i++) {
+            var nb = data[i];
+            var proj = null
+            if (nb.name.indexOf('/') == -1){
+                proj = base_project;
+            } else {
+                bits = nb.name.split('/');
+                name = bits.pop();
+                proj = bits.join('/');
+            }
+            if(new_data[proj] == undefined){
+                new_data[proj] = [];
+            }
+            new_data[proj].push(nb);
+        }
+        return new_data;
+    }
+
+    NotebookList.prototype.new_project_div = function (project) {
+        var item = $('<div/>');
+        item.addClass('project-notebook-list');
+        item.attr('project', project);
+        var item_name = $('<div/>').addClass('project_name');
+        var h2 = $('<h2/>');
+        h2.html(project);
+        item_name.append(h2);
+        item.append(item_name);
+
+        var project_list = this.element     
+        project_list.append(item);
+        return item;
+    };
+
+    NotebookList.prototype.new_notebook_item = function (index, pdiv) {
+        if(!pdiv){
+            pdiv = this.element;
+        }
         var item = $('<div/>');
         item.addClass('list_item ui-widget ui-widget-content ui-helper-clearfix');
         item.css('border-top-style','none');
@@ -139,9 +184,9 @@ var IPython = (function (IPython) {
 
         item.append(item_name);
         if (index === -1) {
-            this.element.append(item);
+            pdiv.append(item);
         } else {
-            this.element.children().eq(index).after(item);
+            pdiv.children().eq(index).after(item);
         }
         return item;
     };
@@ -151,11 +196,15 @@ var IPython = (function (IPython) {
         item.data('nbname', nbname);
         item.data('notebook_id', notebook_id);
         var new_item_name = $('<span/>').addClass('item_name');
+        var href = $('body').data('baseProjectUrl')+notebook_id;
+        if (nbname.indexOf('/') != -1){
+          href = '/n/'+nbname;
+        }
         new_item_name.append(
             $('<a/>').
-            attr('href', $('body').data('baseProjectUrl')+notebook_id).
+            attr('href', href).
             attr('target','_blank').
-            text(nbname)
+            text(nbname.split('/').pop())
         );
         var e = item.find('.item_name');
         if (e.length === 0) {
