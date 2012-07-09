@@ -164,7 +164,7 @@ var IPython = (function (IPython) {
             'clear_output': $.proxy(this.output_area.handle_clear_output, this.output_area),
             'set_next_input': $.proxy(this._handle_set_next_input, this)
         };
-        var msg_id = this.kernel.execute(this.get_text(), callbacks, {silent: false});
+        var msg_id = this.kernel.execute(this.get_code(), callbacks, {silent: false});
     };
 
 
@@ -234,6 +234,25 @@ var IPython = (function (IPython) {
         this.code_mirror.setValue('');
     };
 
+    CodeCell.prototype.get_code = function () {
+      /*
+        Separate out code/text so we can do things like parse the code before
+        send to execute
+      */
+      var cell = this;
+        var code = cell.get_text();
+        var lines = code.split("\n");
+        var result = [];
+        for(var i=0; i < lines.length; i++) {
+          var line = lines[i];
+          if (line == '# stop') {
+            break
+          }
+          result.push(line);
+        }
+        var codeText = result.join("\n");
+        return codeText;
+    };
 
     CodeCell.prototype.get_text = function () {
         return this.code_mirror.getValue();
