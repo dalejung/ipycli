@@ -38,7 +38,7 @@ var IPython = (function (IPython) {
         this.create_elements();
         this.bind_events();
 
-        this.keyMap = 'vim';
+        //this.keyMap = 'vim';
 
     };
 

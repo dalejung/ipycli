@@ -63,8 +63,8 @@ var IPython = (function (IPython) {
 
     TextCell.prototype.handle_keydown = function (event) {
         if (event.which === 13 && !event.shiftKey) {
-            if (that.rendered) {
-                that.edit();
+            if (this.rendered) {
+                this.edit();
                 return false;
             };
         };
