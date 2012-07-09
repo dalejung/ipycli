@@ -13,7 +13,7 @@ var IPython = (function (IPython) {
 
     // TextCell base class
 
-    var TextCell = function () {
+    var TextCell = function (notebook) {
         this.code_mirror_mode = this.code_mirror_mode || 'htmlmixed';
         IPython.Cell.apply(this, arguments);
         this.rendered = false;
@@ -180,7 +180,7 @@ var IPython = (function (IPython) {
 
     // HTMLCell
 
-    var HTMLCell = function () {
+    var HTMLCell = function (notebook) {
         this.placeholder = "Type <strong>HTML</strong> and LaTeX: $\\alpha^2$";
         IPython.TextCell.apply(this, arguments);
         this.cell_type = 'html';
@@ -205,7 +205,7 @@ var IPython = (function (IPython) {
 
     // MarkdownCell
 
-    var MarkdownCell = function () {
+    var MarkdownCell = function (notebook) {
         this.placeholder = "Type *Markdown* and LaTeX: $\\alpha^2$";
         IPython.TextCell.apply(this, arguments);
         this.cell_type = 'markdown';
@@ -243,7 +243,7 @@ var IPython = (function (IPython) {
 
     // RawCell
 
-    var RawCell = function () {
+    var RawCell = function (notebook) {
         this.placeholder = "Type plain text and LaTeX: $\\alpha^2$";
         this.code_mirror_mode = 'rst';
         IPython.TextCell.apply(this, arguments);
@@ -289,7 +289,7 @@ var IPython = (function (IPython) {
 
     // HTMLCell
 
-    var HeadingCell = function () {
+    var HeadingCell = function (notebook) {
         this.placeholder = "Type Heading Here";
         IPython.TextCell.apply(this, arguments);
         this.cell_type = 'heading';

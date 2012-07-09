@@ -14,8 +14,9 @@ var IPython = (function (IPython) {
     var utils = IPython.utils;
 
 
-    var Cell = function () {
+    var Cell = function (notebook) {
         this.placeholder = this.placeholder || '';
+        this.notebook = notebook;
         this.read_only = false;
         this.selected = false;
         this.element = null;

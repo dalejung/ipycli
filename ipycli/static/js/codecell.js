@@ -15,7 +15,7 @@ var IPython = (function (IPython) {
     var utils = IPython.utils;
     var key   = IPython.utils.keycodes;
 
-    var CodeCell = function (kernel) {
+    var CodeCell = function (kernel, notebook) {
         // The kernel doesn't have to be set at creation time, in that case
         // it will be null and set_kernel has to be called later.
         this.kernel = kernel || null;
@@ -23,7 +23,7 @@ var IPython = (function (IPython) {
         this.input_prompt_number = null;
         this.tooltip_on_tab = true;
         this.collapsed = false;
-        IPython.Cell.apply(this, arguments);
+        IPython.Cell.apply(this, [notebook]);
     };
 
 

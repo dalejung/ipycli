@@ -547,16 +547,16 @@ var IPython = (function (IPython) {
         var cell = null;
         if (this.ncells() === 0 || this.is_valid_cell_index(index)) {
             if (type === 'code') {
-                cell = new IPython.CodeCell(this.kernel);
+                cell = new IPython.CodeCell(this.kernel, this);
                 cell.set_input_prompt();
             } else if (type === 'markdown') {
-                cell = new IPython.MarkdownCell();
+                cell = new IPython.MarkdownCell(this);
             } else if (type === 'html') {
-                cell = new IPython.HTMLCell();
+                cell = new IPython.HTMLCell(this);
             } else if (type === 'raw') {
-                cell = new IPython.RawCell();
+                cell = new IPython.RawCell(this);
             } else if (type === 'heading') {
-                cell = new IPython.HeadingCell();
+                cell = new IPython.HeadingCell(this);
             };
             if (cell !== null) {
                 if (this.ncells() === 0) {
@@ -581,16 +581,16 @@ var IPython = (function (IPython) {
         var cell = null;
         if (this.ncells() === 0 || this.is_valid_cell_index(index)) {
             if (type === 'code') {
-                cell = new IPython.CodeCell(this.kernel);
+                cell = new IPython.CodeCell(this.kernel, this);
                 cell.set_input_prompt();
             } else if (type === 'markdown') {
-                cell = new IPython.MarkdownCell();
+                cell = new IPython.MarkdownCell(this);
             } else if (type === 'html') {
-                cell = new IPython.HTMLCell();
+                cell = new IPython.HTMLCell(this);
             } else if (type === 'raw') {
-                cell = new IPython.RawCell();
+                cell = new IPython.RawCell(this);
             } else if (type === 'heading') {
-                cell = new IPython.HeadingCell();
+                cell = new IPython.HeadingCell(this);
             };
             if (cell !== null) {
                 if (this.ncells() === 0) {
