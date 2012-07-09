@@ -301,7 +301,6 @@ class PathedNotebookHandler(AuthenticatedHandler):
 
     @authenticate_unless_readonly
     def get(self, notebook_path):
-        print notebook_path
         nbm = self.application.notebook_manager
         project = nbm.notebook_dir
         notebook_id = nbm.get_pathed_notebook(notebook_path)
@@ -683,9 +682,11 @@ class NotebookCopyHandler(AuthenticatedHandler):
         nbm = self.application.notebook_manager
         project = nbm.notebook_dir
         notebook_id = nbm.copy_notebook(notebook_id)
+        notebook_path = nbm.find_path(notebook_id)
         self.render(
             'notebook.html', project=project,
             notebook_id=notebook_id,
+            notebook_path=notebook_path,
             base_project_url=self.application.ipython_app.base_project_url,
             base_kernel_url=self.application.ipython_app.base_kernel_url,
             kill_kernel=False,

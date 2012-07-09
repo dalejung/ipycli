@@ -86,3 +86,12 @@
 .project-notebook-list {
     margin-bottom:10px;
 }
+
+.project_name {
+  position:relative;
+}
+.project_name .new-notebook {
+  position:absolute;
+  right: 0px;
+  top: 0px;
+}

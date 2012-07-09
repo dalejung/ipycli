@@ -70,24 +70,46 @@ class NotebookManager(LoggingConfigurable):
     # path mapping
     path_mapping = Dict()
 
-    def list_notebooks(self):
+    # all_mapping is a dict of lists. key being the dir
+    all_mapping = Dict()
+    # pathed notebooks
+    pathed_notebooks = Dict()
+
+    def __init__(self, *args, **kwargs):
+        # Default to the normal notebook_dir
+        self.notebook_dirs = [self.notebook_dir]
+        super(NotebookManager, self).__init__(*args, **kwargs)
+
+    def add_notebook_dir(self, dir):
+        self.notebook_dirs.append(dir)
+
+    def ndir_notebooks(self, ndir):
         """List all notebooks in the notebook dir.
 
         This returns a list of dicts of the form::
 
             dict(notebook_id=notebook,name=name)
         """
-        names = glob.glob(os.path.join(self.notebook_dir,
+        names = glob.glob(os.path.join(ndir,
                                        '*' + self.filename_ext))
-        names = [os.path.splitext(os.path.basename(name))[0]
-                 for name in names]
+        return names
 
+    def list_notebooks(self):
+        """
+            List all notebooks in a dict
+        """
+        for ndir in self.notebook_dirs:
+            names = self.ndir_notebooks(ndir)
+            self.all_mapping[ndir] = names
+
+        names = self.all_mapping[self.notebook_dir]
         pathed_notebooks = self.pathed_notebook_list()
         names = itertools.chain(names, pathed_notebooks)
         data = []
         for name in names:
+            path = name
             if name not in self.rev_mapping:
-                notebook_id = self.new_notebook_id(name)
+                notebook_id = self.new_notebook_id(name, path=path)
             else:
                 notebook_id = self.rev_mapping[name]
             data.append(dict(notebook_id=notebook_id,name=name))
@@ -97,7 +119,7 @@ class NotebookManager(LoggingConfigurable):
 
     def pathed_notebook_list(self):
         self.verify_pathed_files()
-        paths = self.path_mapping.values()
+        paths = self.pathed_notebooks.values()
         return paths
 
 
@@ -105,9 +127,9 @@ class NotebookManager(LoggingConfigurable):
         """
             Verify files exist and remove missing files
         """
-        for id,path in self.path_mapping.items():
+        for id,path in self.pathed_notebooks.items():
             if not os.path.isfile(path):
-                del self.path_mapping[id]
+                del self.pathed_notebooks[id]
 
     def file_exists(self, path):
         try:
@@ -116,25 +138,17 @@ class NotebookManager(LoggingConfigurable):
         except:
             return False
 
-    def pathed_notebook_id(self, path):
-        if path not in self.rev_mapping:
-            notebook_id = self.new_notebook_id(path)
-            self.path_mapping[notebook_id] = path
-        else:
-            notebook_id = self.rev_mapping[path]
-        return notebook_id
-
-
     def get_pathed_notebook(self, path):
         file_exists = self.file_exists(path)
         if not file_exists:
             return False
 
-        notebook_id = self.pathed_notebook_id(path)
+        notebook_id = self.new_notebook_id(path, path=path)
+        self.pathed_notebooks[notebook_id] = path
         return notebook_id
 
 
-    def new_notebook_id(self, name):
+    def new_notebook_id(self, name, path=None):
         """Generate a new notebook_id for a name and store its mappings."""
         # TODO: the following will give stable urls for notebooks, but unless
         # the notebooks are immediately redirected to their new urls when their
@@ -147,6 +161,8 @@ class NotebookManager(LoggingConfigurable):
         
         notebook_id = unicode(uuid.uuid4())
         
+        if path:
+            self.path_mapping[notebook_id] = path
         self.mapping[notebook_id] = name
         self.rev_mapping[name] = notebook_id
         return notebook_id
@@ -242,7 +258,8 @@ class NotebookManager(LoggingConfigurable):
                 raise web.HTTPError(400, u'Missing notebook name')
         nb.metadata.name = name
 
-        notebook_id = self.new_notebook_id(name)
+        path = os.path.join(self.notebook_dir, name+self.filename_ext)
+        notebook_id = self.new_notebook_id(name, path=path)
         self.save_notebook_object(notebook_id, nb)
         return notebook_id
 
@@ -265,14 +282,9 @@ class NotebookManager(LoggingConfigurable):
         if notebook_id not in self.mapping:
             raise web.HTTPError(404, u'Notebook does not exist: %s' % notebook_id)
 
-        # Try to get a full pathname first
-        old_name = self.mapping[notebook_id]
+        # bah
+        path = self.find_path(notebook_id)
 
-        try:
-            new_name = nb.metadata.notebook_path or nb.metadata.name
-        except AttributeError:
-            raise web.HTTPError(400, u'Missing notebook name')
-        path = self.get_path_by_name(new_name)
         try:
             with open(path,'w') as f:
                 current.write(nb, f, u'json')
@@ -286,30 +298,6 @@ class NotebookManager(LoggingConfigurable):
                     current.write(nb, f, u'py')
             except Exception as e:
                 raise web.HTTPError(400, u'Unexpected error while saving notebook as script: %s' % e)
-        
-        old_path = self.get_path_by_name(old_name)
-
-        print 'saving ', old_name, new_name
-        print 'saving ', path, notebook_id
-
-        # There are cases where a named and pathed notebook
-        # can exist in the same nbm and share the same file
-        # so stop here before deleting
-        # TODO figure out a way to handle this.
-        if old_path == new_name or path == old_name:
-            return
-
-        if old_name != new_name:
-            print 'deleting'
-            if os.path.isfile(old_path):
-                os.unlink(old_path)
-            if self.save_script:
-                old_pypath = os.path.splitext(old_path)[0] + '.py'
-                if os.path.isfile(old_pypath):
-                    os.unlink(old_pypath)
-            self.mapping[notebook_id] = new_name
-            self.rev_mapping[new_name] = notebook_id
-            del self.rev_mapping[old_name]
 
     def delete_notebook(self, notebook_id):
         """Delete notebook by notebook_id."""
@@ -319,7 +307,7 @@ class NotebookManager(LoggingConfigurable):
         os.unlink(path)
         self.delete_notebook_id(notebook_id)
 
-    def increment_filename(self, basename):
+    def increment_filename(self, basename, ndir=None):
         """Return a non-used filename of the form basename<int>.
         
         This searches through the filenames (basename0, basename1, ...)
@@ -329,7 +317,8 @@ class NotebookManager(LoggingConfigurable):
         i = 0
         while True:
             name = u'%s%i' % (basename,i)
-            path = self.get_path_by_name(name)
+            name = name + self.filename_ext
+            path = os.path.join(ndir, name)
             if not os.path.isfile(path):
                 break
             else:
@@ -343,7 +332,7 @@ class NotebookManager(LoggingConfigurable):
             notebook_id = self.new_notebook_id(name)
         else:
             name = os.path.split(path)[1]
-            notebook_id = self.pathed_notebook_id(path)
+            notebook_id = self.new_notebook_id(path)
 
         metadata = current.new_metadata(name=name)
         nb = current.new_notebook(metadata=metadata)
@@ -354,9 +343,10 @@ class NotebookManager(LoggingConfigurable):
     def copy_notebook(self, notebook_id):
         """Copy an existing notebook and return its notebook_id."""
         last_mod, nb = self.get_notebook_object(notebook_id)
+        ndir, _ = os.path.split(self.find_path(notebook_id))
         name = nb.metadata.name + '-Copy'
-        path, name = self.increment_filename(name)
+        path, name = self.increment_filename(name, ndir=ndir)
         nb.metadata.name = name
-        notebook_id = self.new_notebook_id(name)
+        notebook_id = self.new_notebook_id(name, path=path)
         self.save_notebook_object(notebook_id, nb)
         return notebook_id
