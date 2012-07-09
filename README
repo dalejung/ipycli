@@ -1,0 +1,18 @@
+IPython subapp that supports adding arbitrary notebooks from the command line. 
+It supports the normal notebook directory use. 
+Files added via the CLI will create their own notebook list on the project page. 
+
+**Make sure to put the bin files in your path.**
+
+# ipycli is essentially `ipython notebook` with the extra features baked in
+ipycli --ip="*" --port=8888
+
+# Existing notebooks will be attached to the 
+nb existing_notebook.ipynb
+
+# Specifying a new file can be done with or without .ipynb
+nb new_notebook
+nb new_notebook.ipynb
+
+Screenshots:
+https://github.com/dalejung/ipycli/wiki/screenshots
