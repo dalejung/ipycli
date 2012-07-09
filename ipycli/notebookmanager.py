@@ -158,10 +158,10 @@ class NotebookManager(LoggingConfigurable):
         # disabled and instead we use a random uuid4() call.  But we leave the
         # logic here so that we can later reactivate it, whhen the necessary
         # url redirection code is written.
-        #notebook_id = unicode(uuid.uuid5(uuid.NAMESPACE_URL,
-        #                 'file://'+self.get_path_by_name(name).encode('utf-8')))
         
-        notebook_id = unicode(uuid.uuid4())
+        notebook_id = unicode(uuid.uuid5(uuid.NAMESPACE_URL,
+                         'file://'+self.get_path_by_name(name).encode('utf-8')))
+
         if ndir is None and path is None:
             raise Exception("ndir or path must be passed in")
 
