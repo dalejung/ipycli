@@ -77,8 +77,9 @@ class NotebookManager(LoggingConfigurable):
 
     def __init__(self, *args, **kwargs):
         # Default to the normal notebook_dir
-        self.notebook_dirs = [self.notebook_dir]
         super(NotebookManager, self).__init__(*args, **kwargs)
+
+        self.notebook_dirs = [self.notebook_dir]
 
     def add_notebook_dir(self, dir):
         self.notebook_dirs.append(dir)
@@ -129,6 +130,7 @@ class NotebookManager(LoggingConfigurable):
         """
         for id,path in self.pathed_notebooks.items():
             if not os.path.isfile(path):
+                print 'remove', path
                 del self.pathed_notebooks[id]
 
     def file_exists(self, path):
@@ -148,7 +150,7 @@ class NotebookManager(LoggingConfigurable):
         return notebook_id
 
 
-    def new_notebook_id(self, name, path=None):
+    def new_notebook_id(self, name, ndir=None, path=None):
         """Generate a new notebook_id for a name and store its mappings."""
         # TODO: the following will give stable urls for notebooks, but unless
         # the notebooks are immediately redirected to their new urls when their
@@ -160,24 +162,30 @@ class NotebookManager(LoggingConfigurable):
         #                 'file://'+self.get_path_by_name(name).encode('utf-8')))
         
         notebook_id = unicode(uuid.uuid4())
-        
+        if ndir is None and path is None:
+            raise Exception("ndir or path must be passed in")
+
         if path:
-            self.path_mapping[notebook_id] = path
+            ndir, name = os.path.split(path)
+
+        filepath= os.path.join(ndir, name)
+        self.path_mapping[notebook_id] = filepath
         self.mapping[notebook_id] = name
-        self.rev_mapping[name] = notebook_id
+        self.rev_mapping[filepath] = notebook_id
         return notebook_id
 
     def delete_notebook_id(self, notebook_id):
         """Delete a notebook's id only. This doesn't delete the actual notebook."""
-        name = self.mapping[notebook_id]
+        name = self.path_mapping[notebook_id]
         del self.mapping[notebook_id]
+        del self.path_mapping[notebook_id]
         del self.rev_mapping[name]
 
     def notebook_exists(self, notebook_id):
         """Does a notebook exist?"""
         if notebook_id not in self.mapping:
             return False
-        path = self.get_path_by_name(self.mapping[notebook_id])
+        path = self.find_path(notebook_id)
         return os.path.isfile(path)
 
     def find_path(self, notebook_id):
@@ -325,17 +333,28 @@ class NotebookManager(LoggingConfigurable):
                 i = i+1
         return path, name
 
-    def new_notebook(self, path=None):
-        """Create a new notebook and return its notebook_id."""
-        if path is None:
-            path, name = self.increment_filename('Untitled')
-            notebook_id = self.new_notebook_id(name)
-        else:
-            name = os.path.split(path)[1]
-            notebook_id = self.new_notebook_id(path)
-
+    def new_notebook_object(self, name):
+        """
+        """
         metadata = current.new_metadata(name=name)
         nb = current.new_notebook(metadata=metadata)
+        return nb 
+
+    def new_notebook(self, ndir, name=None):
+        """Create a new notebook and return its notebook_id."""
+        if name is None:
+            # create new file with default naming
+            path, name = self.increment_filename('Untitled', ndir=ndir)
+            notebook_id = self.new_notebook_id(name, ndir=ndir)
+        else:
+            # technically this is a pathed notebook
+            # I actually don't like this
+            notebook_id = self.new_notebook_id(name, ndir=ndir)
+            path = os.path.join(ndir, name)
+            self.pathed_notebooks[notebook_id] = path
+
+        nb = self.new_notebook_object(name)
+
         with open(path,'w') as f:
             current.write(nb, f, u'json')
         return notebook_id

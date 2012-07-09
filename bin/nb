@@ -12,6 +12,8 @@ def open_url(nbpath, host=HOST, port=PORT):
     urllib2.urlopen(url)
 
 def new_url(nbpath, host=HOST, port=PORT):
+    url = "http://%s:%d/new/%s" % (host, port, nbpath)
+    print url
     nbpath = urllib.quote_plus(nbpath)
     url = "http://%s:%d/new/%s" % (host, port, nbpath)
     urllib2.urlopen(url)

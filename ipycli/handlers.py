@@ -20,6 +20,7 @@ import logging
 import Cookie
 import time
 import uuid
+import os.path
 
 from tornado import web
 from tornado import websocket
@@ -258,13 +259,18 @@ class NewHandler(AuthenticatedHandler):
     def get(self, path=None):
         nbm = self.application.notebook_manager
         project = nbm.notebook_dir
-        notebook_id = nbm.new_notebook(path=path)
+
+        ndir = nbm.notebook_dir
+        name = None
+        if path:
+            ndir, name = os.path.split(path)
+        notebook_id = nbm.new_notebook(ndir=ndir, name=name)
         self.render(
             'notebook.html', project=project,
             notebook_id=notebook_id,
             base_project_url=self.application.ipython_app.base_project_url,
             base_kernel_url=self.application.ipython_app.base_kernel_url,
-            notebook_path=None,
+            notebook_path=path,
             kill_kernel=False,
             read_only=False,
             logged_in=self.logged_in,
