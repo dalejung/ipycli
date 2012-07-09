@@ -71,7 +71,6 @@ var IPython = (function (IPython) {
     };
 
     TextCell.prototype.handle_codemirror_keyevent = function (editor, event) {
-      console.log('codemirror', event);
         // This method gets called in CodeMirror's onKeyDown/onKeyPress
         // handlers and is used to provide custom key handling. Its return
         // value is used to determine if CodeMirror should ignore the event:
