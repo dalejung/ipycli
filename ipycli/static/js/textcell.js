@@ -28,7 +28,7 @@ var IPython = (function (IPython) {
         var cell = $("<div>").addClass('cell text_cell border-box-sizing');
         cell.attr('tabindex','2');
         var input_area = $('<div/>').addClass('text_cell_input border-box-sizing');
-        this.code_mirror = CodeMirror(input_area.get(0), {
+        var options = {
             indentUnit : 4,
             mode: this.code_mirror_mode,
             theme: 'default',
@@ -36,7 +36,12 @@ var IPython = (function (IPython) {
             readOnly: this.read_only,
             lineWrapping : true,
             onKeyEvent: $.proxy(this.handle_codemirror_keyevent,this)
-        });
+        };
+        var keyMap = this.notebook ? this.notebook.keyMap : null;
+        if (keyMap){
+          options['keyMap'] = keyMap;
+        }
+        this.code_mirror = CodeMirror(input_area.get(0), options);
         // The tabindex=-1 makes this div focusable.
         var render_area = $('<div/>').addClass('text_cell_render border-box-sizing').
             addClass('rendered_html').attr('tabindex','-1');
@@ -48,21 +53,25 @@ var IPython = (function (IPython) {
     TextCell.prototype.bind_events = function () {
         IPython.Cell.prototype.bind_events.apply(this);
         var that = this;
-        this.element.keydown(function (event) {
-            if (event.which === 13 && !event.shiftKey) {
-                if (that.rendered) {
-                    that.edit();
-                    return false;
-                };
-            };
+        this.element.keydown(function(event) {
+          that.handle_keydown(event, that);
         });
         this.element.dblclick(function () {
             that.edit();
         });
     };
 
+    TextCell.prototype.handle_keydown = function (event) {
+        if (event.which === 13 && !event.shiftKey) {
+            if (that.rendered) {
+                that.edit();
+                return false;
+            };
+        };
+    };
 
     TextCell.prototype.handle_codemirror_keyevent = function (editor, event) {
+      console.log('codemirror', event);
         // This method gets called in CodeMirror's onKeyDown/onKeyPress
         // handlers and is used to provide custom key handling. Its return
         // value is used to determine if CodeMirror should ignore the event:
