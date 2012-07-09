@@ -427,6 +427,18 @@ var IPython = (function (IPython) {
 
     // Cell selection.
 
+    Notebook.prototype.focus_selected = function() {
+        // Move browser input to the selected cell of notebook.
+        // useful when browser focus is somewhere else 
+        var selected = this.get_selected_cell();
+        if(selected) {
+          sel = this.get_selected_index(selected);
+        } else {
+          sel = 0;
+        }
+        this.select(sel);
+    }
+
     Notebook.prototype.select = function (index) {
         if (index !== undefined && index >= 0 && index < this.ncells()) {
             sindex = this.get_selected_index()
@@ -539,6 +551,13 @@ var IPython = (function (IPython) {
         return this;
     };
 
+    Notebook.prototype.delete_cell_all = function() {
+        var ncells = this.ncells();
+        var cells = this.get_cells();
+        for (var i=ncells; i>=0; i--) {
+          this.delete_cell(i);
+        }
+    };
 
     Notebook.prototype.insert_cell_below = function (type, index) {
         // type = ('code','html','markdown')
@@ -1005,20 +1024,26 @@ var IPython = (function (IPython) {
         });
     };
 
-
-    Notebook.prototype.execute_selected_cell = function (options) {
-        // add_new: should a new cell be added if we are at the end of the nb
-        // terminal: execute in terminal mode, which stays in the current cell
-        default_options = {terminal: false, add_new: true};
-        $.extend(default_options, options);
+    Notebook.prototype.execute_cell_content = function (cell) {
+        // Purely just execute the cell
         var that = this;
-        var cell = that.get_selected_cell();
-        var cell_index = that.find_cell_index(cell);
         if (cell instanceof IPython.CodeCell) {
             cell.execute();
         } else if (cell instanceof IPython.HTMLCell) {
             cell.render();
         }
+    },
+
+    Notebook.prototype.execute_cell = function (cell, options) {
+        // add_new: should a new cell be added if we are at the end of the nb
+        // terminal: execute in terminal mode, which stays in the current cell
+        default_options = {select_next:true, terminal: false, add_new: true};
+        $.extend(default_options, options);
+        var that = this;
+
+        that.execute_cell_content(cell);
+
+        var cell_index = that.find_cell_index(cell);
         if (default_options.terminal) {
             cell.select_all();
         } else {
@@ -1027,12 +1052,19 @@ var IPython = (function (IPython) {
                 // If we are adding a new cell at the end, scroll down to show it.
                 that.scroll_to_bottom();
             } else {
+              if(default_options.select_next) {
                 that.select(cell_index+1);
+              }
             };
         };
         this.dirty = true;
-    };
+    },
 
+    Notebook.prototype.execute_selected_cell = function (options) {
+        var that = this;
+        var cell = that.get_selected_cell();
+        that.execute_cell(cell, options);
+    };
 
     Notebook.prototype.execute_all_cells = function () {
         var ncells = this.ncells();
