@@ -93,7 +93,6 @@ var IPython = (function (IPython) {
                             "except :/\\. Please enter a new notebook name:"
                         );
                     } else {
-                        console.log(new_name)
                         IPython.notebook.set_notebook_name(new_name);
                         IPython.notebook.rename_notebook();
                         $(this).dialog('close');

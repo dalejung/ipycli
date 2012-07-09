@@ -1174,7 +1174,6 @@ var IPython = (function (IPython) {
         data.nbformat = this.nbformat;
         data.nbformat_minor = this.nbformat_minor;
         // We do the call with settings so we can set cache to false.
-        console.log(data);
         var settings = {
             processData : false,
             cache : false,
