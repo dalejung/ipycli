@@ -103,7 +103,7 @@ class NotebookManager(LoggingConfigurable):
             names = self.ndir_notebooks(ndir)
             self.all_mapping[ndir] = names
 
-        names = self.all_mapping[self.notebook_dir]
+        names = itertools.chain(*self.all_mapping.values())
         pathed_notebooks = self.pathed_notebook_list()
         names = itertools.chain(names, pathed_notebooks)
         data = []

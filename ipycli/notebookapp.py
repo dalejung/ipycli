@@ -49,7 +49,7 @@ from .handlers import (LoginHandler, LogoutHandler,
     ShellHandler, NotebookRootHandler, NotebookHandler, NotebookCopyHandler,
     RSTHandler, AuthenticatedFileHandler, PrintNotebookHandler,
     MainClusterHandler, ClusterProfileHandler, ClusterActionHandler,
-    PathedNotebookHandler
+    PathedNotebookHandler, AddNotebookDirHandler
 )
 from .notebookmanager import NotebookManager
 from .clustermanager import ClusterManager
@@ -144,6 +144,7 @@ class NotebookWebApplication(web.Application):
             (r"/clusters/%s" % _profile_regex, ClusterProfileHandler),
 
             (r"/n/(.*)", PathedNotebookHandler),
+            (r"/add_dir/(.*)", AddNotebookDirHandler),
         ]
         settings = dict(
             template_path=os.path.join(os.path.dirname(__file__), "templates"),

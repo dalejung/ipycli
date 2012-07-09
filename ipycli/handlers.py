@@ -702,6 +702,16 @@ class NotebookCopyHandler(AuthenticatedHandler):
             mathjax_url=self.application.ipython_app.mathjax_url,
         )
 
+class AddNotebookDirHandler(AuthenticatedHandler):
+
+    @web.authenticated
+    def get(self, path):
+        nbm = self.application.notebook_manager
+        if not os.path.isdir(path):
+            raise web.HTTPError(503, u'Not valid Directory')
+
+        nbm.add_notebook_dir(path)
+
 
 #-----------------------------------------------------------------------------
 # Cluster handlers
