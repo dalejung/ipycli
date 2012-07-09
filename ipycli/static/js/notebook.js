@@ -38,6 +38,8 @@ var IPython = (function (IPython) {
         this.create_elements();
         this.bind_events();
 
+        this.keyMap = 'vim';
+
     };
 
     Notebook.prototype.is_pathed = function() {
@@ -89,7 +91,7 @@ var IPython = (function (IPython) {
         });
 
 
-        $(document).keydown(function (event) {
+        $(this.element).keydown(function (event) {
             // console.log(event);
             if (that.read_only) return true;
             
