@@ -680,6 +680,19 @@ class NotebookHandler(AuthenticatedHandler):
         self.set_status(204)
         self.finish()
 
+class RenameNotebookHandler(AuthenticatedHandler):
+
+    SUPPORTED_METHODS = ('PUT')
+
+    @web.authenticated
+    def put(self, notebook_id):
+        nbm = self.application.notebook_manager
+        format = self.get_argument('format', default='json')
+        name = self.get_argument('name', default=None)
+        nbm.rename_notebook(notebook_id, self.request.body, name=name, format=format)
+        self.set_status(204)
+        self.finish()
+
 
 class NotebookCopyHandler(AuthenticatedHandler):
 

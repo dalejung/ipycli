@@ -58,10 +58,12 @@ var IPython = (function (IPython) {
 
 
     SaveWidget.prototype.rename_notebook = function () {
+        /*
         if(IPython.notebook.is_pathed()){
           alert('Cannot do this with pathed notebook');
           return;
         }
+        */
 
         var that = this;
         var dialog = $('<div/>');
@@ -91,8 +93,9 @@ var IPython = (function (IPython) {
                             "except :/\\. Please enter a new notebook name:"
                         );
                     } else {
+                        console.log(new_name)
                         IPython.notebook.set_notebook_name(new_name);
-                        IPython.notebook.save_notebook();
+                        IPython.notebook.rename_notebook();
                         $(this).dialog('close');
                     }
                 },

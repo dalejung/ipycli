@@ -168,11 +168,15 @@ class NotebookManager(LoggingConfigurable):
         if path:
             ndir, name = os.path.split(path)
 
+        self.set_notebook_path(notebook_id, ndir, name)
+        
+        return notebook_id
+
+    def set_notebook_path(self, notebook_id, ndir, name):
         filepath= os.path.join(ndir, name)
         self.path_mapping[notebook_id] = filepath
         self.mapping[notebook_id] = name
         self.rev_mapping[filepath] = notebook_id
-        return notebook_id
 
     def delete_notebook_id(self, notebook_id):
         """Delete a notebook's id only. This doesn't delete the actual notebook."""
@@ -284,6 +288,36 @@ class NotebookManager(LoggingConfigurable):
         if name is not None:
             nb.metadata.name = name
         self.save_notebook_object(notebook_id, nb)
+
+    def rename_notebook(self, notebook_id, data, name=None, format=u'json'):
+        """ Separate out rename """
+        if format not in self.allowed_formats:
+            raise web.HTTPError(415, u'Invalid notebook format: %s' % format)
+
+        try:
+            nb = current.reads(data.decode('utf-8'), format)
+        except:
+            raise web.HTTPError(400, u'Invalid JSON data')
+
+        if name is not None:
+            nb.metadata.name = name
+
+        old_path = self.find_path(notebook_id)
+        ndir, _ = os.path.split(old_path)
+        name = nb.metadata.name + self.filename_ext
+        self.set_notebook_path(notebook_id, ndir, name)
+
+        # save new file
+        self.save_notebook_object(notebook_id, nb)
+
+        # Delete old file 
+        if os.path.isfile(old_path):
+            os.unlink(old_path)
+        if self.save_script:
+            old_pypath = os.path.splitext(old_path)[0] + '.py'
+            if os.path.isfile(old_pypath):
+                os.unlink(old_pypath)
+
 
     def save_notebook_object(self, notebook_id, nb):
         """Save an existing notebook object by notebook_id."""

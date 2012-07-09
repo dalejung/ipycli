@@ -49,7 +49,7 @@ from .handlers import (LoginHandler, LogoutHandler,
     ShellHandler, NotebookRootHandler, NotebookHandler, NotebookCopyHandler,
     RSTHandler, AuthenticatedFileHandler, PrintNotebookHandler,
     MainClusterHandler, ClusterProfileHandler, ClusterActionHandler,
-    PathedNotebookHandler, AddNotebookDirHandler
+    PathedNotebookHandler, AddNotebookDirHandler, RenameNotebookHandler
 )
 from .notebookmanager import NotebookManager
 from .clustermanager import ClusterManager
@@ -137,6 +137,7 @@ class NotebookWebApplication(web.Application):
             (r"/kernels/%s/shell" % _kernel_id_regex, ShellHandler),
             (r"/notebooks", NotebookRootHandler),
             (r"/notebooks/%s" % _notebook_id_regex, NotebookHandler),
+            (r"/rename/%s" % _notebook_id_regex, RenameNotebookHandler),
             (r"/rstservice/render", RSTHandler),
             (r"/files/(.*)", AuthenticatedFileHandler, {'path' : notebook_manager.notebook_dir}),
             (r"/clusters", MainClusterHandler),
