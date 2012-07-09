@@ -63,6 +63,14 @@ var IPython = (function (IPython) {
     };
 
     CodeCell.prototype.handle_codemirror_keyevent = function (editor, event) {
+        var ret = this._handle_code_mirror_keyevent(editor, event);
+        if (ret != null){
+          return ret;
+        }
+        return false;
+    },
+
+    CodeCell.prototype._handle_codemirror_keyevent = function (editor, event) {
         // This method gets called in CodeMirror's onKeyDown/onKeyPress
         // handlers and is used to provide custom key handling. Its return
         // value is used to determine if CodeMirror should ignore the event:
@@ -151,9 +159,9 @@ var IPython = (function (IPython) {
         } else {
             // keypress/keyup also trigger on TAB press, and we don't want to
             // use those to disable tab completion.
-            return false;
+            return null;
         };
-        return false;
+        return null;
     };
 
 
