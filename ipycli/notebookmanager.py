@@ -23,6 +23,7 @@ import uuid
 import glob
 import itertools
 import os.path
+import cPickle as pickle
 
 from tornado import web
 
@@ -33,6 +34,33 @@ from IPython.utils.traitlets import Unicode, List, Dict, Bool, TraitError
 #-----------------------------------------------------------------------------
 # Classes
 #-----------------------------------------------------------------------------
+
+class NotebookListPersister(object):
+    """
+        Simple persister
+    """
+    def __init__(self):
+        self.old_persist = None
+
+    def check(self, ndirs, pathed):
+        if (ndirs, pathed) == self.old_persist:
+            return
+        self.save(ndirs, pathed)
+        self.old_persist = (ndirs[:], pathed[:])
+
+    def save(self, ndirs, pathed):
+        data = (ndirs, pathed)
+        with open('notebook_list.db', 'w') as f:
+            pickle.dump(data, f)
+
+    def load(self):
+        try:
+            with open('notebook_list.db') as f:
+                data = pickle.load(f)
+                return data
+        except:
+            return False
+
 
 class NotebookManager(LoggingConfigurable):
 
@@ -80,6 +108,8 @@ class NotebookManager(LoggingConfigurable):
         super(NotebookManager, self).__init__(*args, **kwargs)
 
         self.notebook_dirs = [self.notebook_dir]
+        self.persister = NotebookListPersister()
+        self.load_notebooks()
 
     def add_notebook_dir(self, dir):
         self.notebook_dirs.append(dir)
@@ -95,6 +125,16 @@ class NotebookManager(LoggingConfigurable):
                                        '*' + self.filename_ext))
         return names
 
+    def load_notebooks(self):
+        data = self.persister.load()
+        print data
+        if not data:
+            return
+        self.notebook_dirs = data[0]
+        pathed_notebooks = data[1]
+        for path in pathed_notebooks:
+            self.get_pathed_notebook(path)
+
     def list_notebooks(self):
         """
             List all notebooks in a dict
@@ -105,6 +145,9 @@ class NotebookManager(LoggingConfigurable):
 
         names = itertools.chain(*self.all_mapping.values())
         pathed_notebooks = self.pathed_notebook_list()
+
+        self.persister.check(self.notebook_dirs, pathed_notebooks)
+
         names = itertools.chain(names, pathed_notebooks)
         data = []
         for name in names:
