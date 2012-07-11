@@ -332,6 +332,25 @@ class NotebookManager(LoggingConfigurable):
             nb.metadata.name = name
         self.save_notebook_object(notebook_id, nb)
 
+    def restore_notebook(self, notebook_id):
+        pass
+
+    def autosave_notebook(self, notebook_id, data, client_id, name=None, format=u'json'):
+        """Save an existing notebook by notebook_id."""
+        if format not in self.allowed_formats:
+            raise web.HTTPError(415, u'Invalid notebook format: %s' % format)
+
+        try:
+            nb = current.reads(data.decode('utf-8'), format)
+        except:
+            raise web.HTTPError(400, u'Invalid JSON data')
+
+        old_path = self.find_path(notebook_id)
+        ndir, filename = os.path.split(old_path)
+        filename = '.' + filename + '.' + client_id + ".save"
+        path = os.path.join(ndir, filename)
+        self.save_notebook_object(notebook_id, nb, path=path)
+
     def rename_notebook(self, notebook_id, data, name=None, format=u'json'):
         """ Separate out rename """
         if format not in self.allowed_formats:
@@ -362,13 +381,14 @@ class NotebookManager(LoggingConfigurable):
                 os.unlink(old_pypath)
 
 
-    def save_notebook_object(self, notebook_id, nb):
+    def save_notebook_object(self, notebook_id, nb, path=None):
         """Save an existing notebook object by notebook_id."""
         if notebook_id not in self.mapping:
             raise web.HTTPError(404, u'Notebook does not exist: %s' % notebook_id)
 
         # bah
-        path = self.find_path(notebook_id)
+        if path is None:
+            path = self.find_path(notebook_id)
 
         try:
             with open(path,'w') as f:

@@ -37,8 +37,9 @@ var IPython = (function (IPython) {
         this.style();
         this.create_elements();
         this.bind_events();
+        this.client_id = utils.uuid();
 
-        //this.keyMap = 'vim';
+        this.keyMap = 'vim';
 
     };
 
@@ -1176,6 +1177,35 @@ var IPython = (function (IPython) {
             metadata : this.metadata
         };
         return data;
+    };
+
+    Notebook.prototype.autosave_notebook = function () {
+        // We may want to move the name/id/nbformat logic inside toJSON?
+        var data = this.toJSON();
+        data.metadata.name = this.notebook_name;
+        data.metadata.notebook_path = this.notebook_path;
+        data.nbformat = this.nbformat;
+        data.nbformat_minor = this.nbformat_minor;
+        // We do the call with settings so we can set cache to false.
+        var settings = {
+            processData : false,
+            cache : false,
+            type : "PUT",
+            data : JSON.stringify(data),
+            headers : {'Content-Type': 'application/json'},
+            success : $.proxy(this.save_notebook_success,this),
+            error : $.proxy(this.save_notebook_error,this)
+        };
+
+        // Dont' save if data is the same
+        if (this.last_save == settings.data) {
+            return;
+        }
+        this.last_save = settings.data;
+        $([IPython.events]).trigger('notebook_saving.Notebook');
+        var url = $('body').data('baseProjectUrl') + 'autosave/' + this.notebook_id;
+        url = url + '/' + this.client_id;
+        $.ajax(url, settings);
     };
 
     Notebook.prototype.save_notebook = function () {

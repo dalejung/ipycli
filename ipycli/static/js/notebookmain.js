@@ -70,5 +70,8 @@ $(document).ready(function () {
 
     IPython.notebook.load_notebook(notebook_id);
     IPython.notebook.notebook_path = notebook_path;
+
+    // auto save 10 secs   
+    setInterval("IPython.notebook.autosave_notebook();", 10000);
 });
 
