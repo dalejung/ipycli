@@ -39,7 +39,7 @@ var IPython = (function (IPython) {
         this.bind_events();
         this.client_id = utils.uuid();
 
-        this.keyMap = 'vim';
+        //this.keyMap = 'vim';
 
     };
 
