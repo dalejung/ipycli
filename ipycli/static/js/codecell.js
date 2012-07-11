@@ -63,7 +63,7 @@ var IPython = (function (IPython) {
     };
 
     CodeCell.prototype.handle_codemirror_keyevent = function (editor, event) {
-        var ret = this._handle_code_mirror_keyevent(editor, event);
+        var ret = this._handle_codemirror_keyevent(editor, event);
         if (ret != null){
           return ret;
         }
