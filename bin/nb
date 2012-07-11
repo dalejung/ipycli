@@ -42,16 +42,20 @@ if __name__ == '__main__':
     import os
     parser = argparse.ArgumentParser(description="Start a notebook");
 
-    parser.add_argument('action', nargs="?", action="store", default="notebook")
+    #parser.add_argument('action', nargs="?", action="store", default="notebook")
     parser.add_argument('filepath', action="store")
 
     args = parser.parse_args()
 
     filepath = args.filepath
-    action = args.action
+    #action = args.action
     cwd = os.getcwd()
 
     fullpath = os.path.join(cwd, filepath)
+    action = 'notebook'
+    if os.path.isdir(fullpath):
+        action = 'add-dir'
+
     if action == "notebook":
         open_notebook(fullpath)
     elif action == "add-dir":
