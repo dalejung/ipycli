@@ -19,3 +19,8 @@ nb add-dir some_directory
 
 Screenshots:
 https://github.com/dalejung/ipycli/wiki/screenshots
+
+* Added an autosave. The file will be .[name].ipynb.[client_id].save
+client_id is random id for each browser window. Right now, it's just there for crsis prevention.
+
+* Added a persistence. It just pickeles the notebook dirs and pathed notebooks.
