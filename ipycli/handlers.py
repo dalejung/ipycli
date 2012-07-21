@@ -365,7 +365,9 @@ class MainKernelHandler(AuthenticatedHandler):
         km = self.application.kernel_manager
         nbm = self.application.notebook_manager
         notebook_id = self.get_argument('notebook', default=None)
-        kernel_id = km.start_kernel(notebook_id, cwd=nbm.notebook_dir)
+        notebook_path = nbm.find_path(notebook_id)
+        dirpath = os.path.dirname(notebook_path)
+        kernel_id = km.start_kernel(notebook_id, cwd=dirpath)
         data = {'ws_url':self.ws_url,'kernel_id':kernel_id}
         self.set_header('Location', '/'+kernel_id)
         self.finish(jsonapi.dumps(data))
