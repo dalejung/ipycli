@@ -43,6 +43,7 @@ var IPython = (function (IPython) {
                 session : this.session_id,
                 msg_type : msg_type
             },
+            metadata : {},
             content : content,
             parent_header : {}
         };
@@ -313,12 +314,13 @@ var IPython = (function (IPython) {
         reply = $.parseJSON(e.data);
         var header = reply.header;
         var content = reply.content;
+        var metadata = reply.metadata;
         var msg_type = header.msg_type;
         var callbacks = this.get_callbacks_for_msg(reply.parent_header.msg_id);
         if (callbacks !== undefined) {
             var cb = callbacks[msg_type];
             if (cb !== undefined) {
-                cb(content);
+                cb(content, metadata);
             }
         };
 
@@ -350,6 +352,7 @@ var IPython = (function (IPython) {
         reply = $.parseJSON(e.data);
         var content = reply.content;
         var msg_type = reply.header.msg_type;
+        var metadata = reply.metadata;
         var callbacks = this.get_callbacks_for_msg(reply.parent_header.msg_id);
         if (msg_type !== 'status' && callbacks === undefined) {
             // Message not from one of this notebook's cells and there are no
@@ -360,7 +363,7 @@ var IPython = (function (IPython) {
         if (output_types.indexOf(msg_type) >= 0) {
             var cb = callbacks['output'];
             if (cb !== undefined) {
-                cb(msg_type, content);
+                cb(msg_type, content, metadata);
             }
         } else if (msg_type === 'status') {
             if (content.execution_state === 'busy') {
@@ -374,7 +377,7 @@ var IPython = (function (IPython) {
         } else if (msg_type === 'clear_output') {
             var cb = callbacks['clear_output'];
             if (cb !== undefined) {
-                cb(content);
+                cb(content, metadata);
             }
         };
     };
