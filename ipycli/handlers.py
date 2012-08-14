@@ -260,11 +260,12 @@ class NewHandler(AuthenticatedHandler):
         nbm = self.application.notebook_manager
         project = nbm.notebook_dir
 
-        ndir = nbm.notebook_dir
+        backend = nbm.notebook_dirs[0]
         name = None
         if path:
+            raise Exception("Need to make a pathed_file handler")
             ndir, name = os.path.split(path)
-        notebook_id = nbm.new_notebook(ndir=ndir, name=name)
+        notebook_id = nbm.new_notebook(backend=backend, name=name)
         self.render(
             'notebook.html', project=project,
             notebook_id=notebook_id,
@@ -286,9 +287,8 @@ class NamedNotebookHandler(AuthenticatedHandler):
         nbm = self.application.notebook_manager
         project = nbm.notebook_dir
 
-        notebook_path = nbm.find_path(notebook_id)
-        if not nbm.notebook_exists(notebook_id):
-            raise web.HTTPError(404, u'Notebook does not exist: %s' % notebook_id)
+        nb = nbm.mapping[notebook_id]
+        notebook_path = nb.path
         
         self.render(
             'notebook.html', project=project,

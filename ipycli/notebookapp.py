@@ -239,6 +239,8 @@ aliases.update({
     'certfile': 'NotebookApp.certfile',
     'notebook-dir': 'NotebookManager.notebook_dir',
     'browser': 'NotebookApp.browser',
+    'github-user': 'NotebookApp.github_user',
+    'github-pw': 'NotebookApp.github_pw',
 })
 
 # remove ipkernel flags that are singletons, and don't make sense in
@@ -246,7 +248,7 @@ aliases.update({
 aliases.pop('f', None)
 
 notebook_aliases = [u'port', u'port-retries', u'ip', u'keyfile', u'certfile',
-                    u'notebook-dir']
+                    u'notebook-dir', u'github-user', u'github-pw']
 
 #-----------------------------------------------------------------------------
 # NotebookApp
@@ -300,6 +302,14 @@ class NotebookApp(BaseIPythonApplication):
 
     certfile = Unicode(u'', config=True, 
         help="""The full path to an SSL/TLS certificate file."""
+    )
+
+    github_user = Unicode(u'', config=True, 
+        help="""Github user to use for GIST backend"""
+    )
+
+    github_pw = Unicode(u'', config=True, 
+        help="""Github password to use for GIST backend"""
     )
     
     keyfile = Unicode(u'', config=True, 
@@ -561,6 +571,12 @@ class NotebookApp(BaseIPythonApplication):
         info("The IPython Notebook is running at: %s://%s:%i%s" %
              (proto, ip, self.port,self.base_project_url) )
         info("Use Control-C to stop this server and shut down all kernels.")
+
+        if self.github_user and self.github_pw:
+            from .gist_backend import gist_hub
+            ghub = gist_hub(self.github_user, self.github_pw)
+            projects = ghub.get_gist_projects()
+            self.notebook_manager.notebook_dirs.extend(projects)
 
         if self.open_browser or self.file_to_run:
             ip = self.ip or '127.0.0.1'
