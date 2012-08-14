@@ -365,8 +365,13 @@ class MainKernelHandler(AuthenticatedHandler):
         km = self.application.kernel_manager
         nbm = self.application.notebook_manager
         notebook_id = self.get_argument('notebook', default=None)
-        notebook_path = nbm.find_path(notebook_id)
-        dirpath = os.path.dirname(notebook_path)
+
+        nbo = nbm.mapping[notebook_id]
+        dirpath = nbo.get_wd()
+        # if no dirpath. Start kernel is default_dir
+        if dirpath is None:
+            dirpath = nbm.notebook_dir
+
         kernel_id = km.start_kernel(notebook_id, cwd=dirpath)
         data = {'ws_url':self.ws_url,'kernel_id':kernel_id}
         self.set_header('Location', '/'+kernel_id)
