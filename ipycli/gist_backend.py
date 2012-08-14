@@ -1,5 +1,8 @@
-import github
 import os.path
+
+import github
+from IPython.nbformat import current
+from .folder_backend import NBObject
 
 def get_notebook_gists(u):
     nb_gists = []
@@ -11,6 +14,11 @@ def get_notebook_gists(u):
             nb_gists.append(gist)
 
     return nb_gists
+
+class GistObject(NBObject):
+    def get_wd(self):
+        """ Get Working Directory """
+        return None
 
 class GistProject(object):
     def __init__(self, gist, hub):
@@ -36,7 +44,33 @@ class GistProject(object):
         return file.content
 
     def notebooks(self):
-        return [os.path.join(self.path,nb) for nb in self.get_notebooks()]
+        notebooks = [os.path.join(self.path,nb) for nb in self.get_notebooks()]
+        notebooks = [GistObject(self, path) for path in notebooks]
+        return notebooks
+
+    def get_notebook_object(self, path):
+        last_modified = self.gist.updated_at
+        filename = os.path.basename(path)
+        content = self.get_notebook(filename)
+        try:
+            # v1 and v2 and json in the .ipynb files.
+            nb = current.reads(content, u'json')
+        except:
+            raise
+        # Always use the filename as the notebook name.
+        nb.metadata.name = filename
+        return last_modified, nb
+
+    def notebook_exists(self, path):
+        """Does a notebook exist?"""
+        pass
+
+    def new_notebook_object(self, path):
+        pass
+
+    def save_notebook_object(self, nb, path):
+        pass
+
 
     def __hash__(self):
         return hash(self.path)

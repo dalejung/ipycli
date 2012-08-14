@@ -159,8 +159,7 @@ class NotebookManager(LoggingConfigurable):
             List all notebooks in a dict
         """
         for backend in self.notebook_dirs:
-            names = backend.notebooks()
-            nbs = [NBObject(backend=backend, path=name) for name in names]
+            nbs = backend.notebooks()
             self.all_mapping[backend] = nbs
 
         notebooks = itertools.chain(*self.all_mapping.values())
@@ -171,7 +170,7 @@ class NotebookManager(LoggingConfigurable):
         all_notebooks = itertools.chain(notebooks, pathed_notebooks)
         data = []
         for nb in all_notebooks:
-            if name not in self.rev_mapping:
+            if nb not in self.rev_mapping:
                 notebook_id = self.new_notebook_id(nb)
             else:
                 notebook_id = self.rev_mapping[nb]
@@ -238,11 +237,11 @@ class NotebookManager(LoggingConfigurable):
             raise Exception("ndir or path must be passed in")
 
 
-        self.set_notebook_path(notebook_id, backend, nb)
+        self.set_notebook_path(notebook_id, nb)
         
         return notebook_id
 
-    def set_notebook_path(self, notebook_id, ndir, nb):
+    def set_notebook_path(self, notebook_id, nb):
         filepath = nb.path
         self.path_mapping[notebook_id] = filepath
         self.mapping[notebook_id] = nb
@@ -385,21 +384,20 @@ class NotebookManager(LoggingConfigurable):
             nb.metadata.name = name
 
         old_path = self.find_path(notebook_id)
-        ndir, _ = os.path.split(old_path)
+        nbo = self.mapping[notebook_id]
+        backend = nbo.backend
         name = nb.metadata.name + self.filename_ext
-        self.set_notebook_path(notebook_id, ndir, name)
+
+        # TODO should this be done elsehwere?
+        nbo.path = name
+        print nbo.path
+
+        self.set_notebook_path(notebook_id, nbo)
 
         # save new file
         self.save_notebook_object(notebook_id, nb)
 
-        # Delete old file 
-        if os.path.isfile(old_path):
-            os.unlink(old_path)
-        if self.save_script:
-            old_pypath = os.path.splitext(old_path)[0] + '.py'
-            if os.path.isfile(old_pypath):
-                os.unlink(old_pypath)
-
+        backend.delete_notebook(old_path)
 
     def save_notebook_object(self, notebook_id, nb, path=None):
         """Save an existing notebook object by notebook_id."""
@@ -416,10 +414,11 @@ class NotebookManager(LoggingConfigurable):
 
     def delete_notebook(self, notebook_id):
         """Delete notebook by notebook_id."""
-        path = self.find_path(notebook_id)
-        if not os.path.isfile(path):
-            raise web.HTTPError(404, u'Notebook does not exist: %s' % notebook_id)
-        os.unlink(path)
+        try:
+            nbo = self.mapping[notebook_id]
+            nbo.backend.delete_notebook(nbo.path)
+        except:
+            raise web.HTTPError(404, u'Notebook does not exist: ')
         self.delete_notebook_id(notebook_id)
 
     def new_notebook_object(self, name):
@@ -439,6 +438,7 @@ class NotebookManager(LoggingConfigurable):
             backend.save_notebook_object(nb, path=path)
             notebook_id = self.new_notebook_id(nbo, backend=backend)
         else:
+            raise Exception("Another spot to add pathed backend")
             # technically this is a pathed notebook
             # I actually don't like this
             notebook_id = self.new_notebook_id(name, ndir=ndir)
@@ -450,10 +450,12 @@ class NotebookManager(LoggingConfigurable):
     def copy_notebook(self, notebook_id):
         """Copy an existing notebook and return its notebook_id."""
         last_mod, nb = self.get_notebook_object(notebook_id)
-        ndir, _ = os.path.split(self.find_path(notebook_id))
+        nbo = self.mapping[notebook_id]
+        backend = nbo.backend
         name = nb.metadata.name + '-Copy'
-        path, name = self.increment_filename(name, ndir=ndir)
+        path, name = backend.increment_filename(name)
         nb.metadata.name = name
-        notebook_id = self.new_notebook_id(name, path=path)
+        copy_nbo = backend.new_notebook_object(path)
+        notebook_id = self.new_notebook_id(copy_nbo)
         self.save_notebook_object(notebook_id, nb)
         return notebook_id
