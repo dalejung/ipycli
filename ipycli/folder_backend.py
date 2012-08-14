@@ -16,7 +16,8 @@ class DirectoryProject(object):
     def notebooks(self):
         names = glob.glob(os.path.join(self.dir,
                                        '*' + self.filename_ext))
-        return names
+        nbs = [NBObject(backend=self, path=name) for name in names]
+        return nbs
 
     def __hash__(self):
         return hash(self.dir)
@@ -68,6 +69,17 @@ class DirectoryProject(object):
             except Exception as e:
                 raise web.HTTPError(400, u'Unexpected error while saving notebook as script: %s' % e)
 
+    def delete_notebook(self, path):
+        if not os.path.isfile(path):
+            raise web.HTTPError(404, u'Notebook does not exist: ')
+
+        os.unlink(path)
+
+        if self.save_script:
+            old_pypath = os.path.splitext(old_path)[0] + '.py'
+            if os.path.isfile(old_pypath):
+                os.unlink(old_pypath)
+
     def increment_filename(self, basename):
         """Return a non-used filename of the form basename<int>.
         
@@ -106,3 +118,7 @@ class NBObject(object):
             return self.path == other
         if isinstance(other, NBObject):
             return self.path == self.path
+
+    def get_wd(self):
+        """ Get Working Directory """
+        return self.backend.dir
