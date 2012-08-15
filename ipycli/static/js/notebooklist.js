@@ -99,10 +99,14 @@ var IPython = (function (IPython) {
     };
 
 
-    NotebookList.prototype.project_notebook_list_load = function (project, data) {
-        pdiv = $('.project-notebook-list[project="'+project+'"]')[0];
+    NotebookList.prototype.project_notebook_list_load = function (project) {
+        pdiv = $('.project-notebook-list[project="'+project['path']+'"]')[0];
         if(!pdiv){
             pdiv = this.new_project_div(project);
+        }
+        data = project['files'];
+        if (!data) {
+          return;
         }
         var len = data.length;
 
@@ -128,9 +132,9 @@ var IPython = (function (IPython) {
 
     NotebookList.prototype.list_loaded = function (data, status, xhr) {
         var base_project = $('body').data('project');
-        new_data = this.split_data(data);
-        for (proj in new_data){
-            this.project_notebook_list_load(proj, new_data[proj]);
+        projects = this.split_data(data);
+        for (i in projects){
+            this.project_notebook_list_load(projects[i]);
         }
         $('div.project_name').addClass('list_header ui-widget ui-widget-header');
     }
@@ -140,8 +144,10 @@ var IPython = (function (IPython) {
         var base_project = $('body').data('project');
         new_data[base_project] = [];
 
-        for(var i=0; i < data.length;i++) {
-            var nb = data[i];
+        projects = data['projects'];
+        files = data['files'];
+        for(var i=0; i < files.length;i++) {
+            var nb = files[i];
             var proj = null
             if (nb.name.indexOf('/') == -1){
                 proj = base_project;
@@ -155,16 +161,25 @@ var IPython = (function (IPython) {
             }
             new_data[proj].push(nb);
         }
-        return new_data;
+        for (project_path in new_data) {
+          var project = null;
+          for (p in projects) {
+            if (projects[p].path == project_path) {
+              project = projects[p];
+            }
+          }
+          project['files'] = new_data[project_path];
+        }
+        return projects;
     }
 
     NotebookList.prototype.new_project_div = function (project) {
         var item = $('<div/>');
         item.addClass('project-notebook-list');
-        item.attr('project', project);
+        item.attr('project', project['path']);
         var item_name = $('<div/>').addClass('project_name');
         var h2 = $('<h2/>');
-        h2.html(project);
+        h2.html(project['name']);
         item_name.append(h2);
 
         var new_but = $('<button>New Notebook</button>').addClass('new-notebook');

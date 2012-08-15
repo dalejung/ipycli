@@ -11,7 +11,7 @@ def get_notebook_gists(u):
     for gist in gists:
         desc = gist.description
         words = desc.split(" ")
-        if "#notebook" in words:
+        if "#notebook" in words and "#inactive" not in words:
             nb_gists.append(gist)
 
     return nb_gists

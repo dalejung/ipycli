@@ -13,6 +13,15 @@ class DirectoryProject(object):
         self.filename_ext = filename_ext
         self.save_script = False
 
+    @property  
+    def path(self):
+        return self.dir
+
+    @property  
+    def name(self):
+        return self.dir
+
+
     def notebooks(self):
         names = glob.glob(os.path.join(self.dir,
                                        '*' + self.filename_ext))

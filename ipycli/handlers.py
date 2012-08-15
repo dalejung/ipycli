@@ -648,7 +648,13 @@ class NotebookRootHandler(AuthenticatedHandler):
         files = nbm.list_notebooks()
         for f in files :
             f['kernel_id'] = km.kernel_for_notebook(f['notebook_id'])
-        self.finish(jsonapi.dumps(files))
+
+        backends = []
+        for backend in nbm.notebook_dirs:
+            b = {'name': backend.name, 'path': backend.path}
+            backends.append(b)
+            data = {'files': files, 'projects': backends}
+        self.finish(jsonapi.dumps(data))
 
     @web.authenticated
     def post(self):
