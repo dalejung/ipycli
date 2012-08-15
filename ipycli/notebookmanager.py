@@ -175,8 +175,12 @@ class NotebookManager(LoggingConfigurable):
         """
             List all notebooks in a dict
         """
-        # bah hack to keep ordered uniqueness
+        # HACK
+        if self.ghub:
+            projects = self.ghub.get_gist_projects()
+            self.notebook_dirs.extend(projects)
         self.notebook_dirs = list(unique_everseen(self.notebook_dirs))
+        # ENDHACK
         for backend in self.notebook_dirs:
             nbs = backend.notebooks()
             self.all_mapping[backend] = nbs

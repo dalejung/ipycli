@@ -575,6 +575,8 @@ class NotebookApp(BaseIPythonApplication):
         if self.github_user and self.github_pw:
             from .gist_backend import gist_hub
             ghub = gist_hub(self.github_user, self.github_pw)
+            # hack
+            self.notebook_manager.ghub = ghub
             projects = ghub.get_gist_projects()
             self.notebook_manager.notebook_dirs.extend(projects)
 
