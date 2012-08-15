@@ -24,3 +24,15 @@ https://github.com/dalejung/ipycli/wiki/screenshots
 client_id is random id for each browser window. Right now, it's just there for crsis prevention.
 
 * Added a persistence. It just pickeles the notebook dirs and pathed notebooks.
+
+08-14-12
+
+* Add some prelim work to get gist to work as a backend. 
+
+--github-user=user --github-pw=pw 
+
+will get you gist access. Your gists must have #notebook in the description. Each Gist is treated like a project folder. 
+You can access files separately via the ipython notebook manager. 
+
+Creating new files and renaming have not been added. Note that an emtpy gist file won't show up, so if you want to create a 
+new file manually you will actually need to paste in a nb json.
