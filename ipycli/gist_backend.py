@@ -27,11 +27,15 @@ class GistProject(object):
 
     def __init__(self, gist, hub):
         words = [w for w in gist.description.split() if not w.startswith("#")]
-        self.name = " ".join(words)
+        self._name = " ".join(words)
         self.hub = hub
         self.gist = gist
         self.id = gist.id
         self.path = gist.html_url
+
+    @property
+    def name(self):
+        return self._name + "        [{0}]".format(self.id)
 
     def get_notebooks(self):
         self.refresh_gist()
