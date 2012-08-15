@@ -1,8 +1,9 @@
 import os.path
+from StringIO import StringIO
 
 import github
 from IPython.nbformat import current
-from .folder_backend import NBObject
+from ipycli.folder_backend import NBObject
 
 def get_notebook_gists(u):
     nb_gists = []
@@ -30,6 +31,7 @@ class GistProject(object):
         self.path = gist.html_url
 
     def get_notebooks(self):
+        self.refresh_gist()
         files = self.gist.files
         notebooks = []
         for file in files:
@@ -38,8 +40,13 @@ class GistProject(object):
 
         return notebooks
 
-    def get_notebook(self, filename):
+    def refresh_gist(self):
         gist = self.hub.get_gist(self.gist.id)
+        self.gist = gist
+        return gist
+
+    def get_notebook(self, filename):
+        gist = self.refresh_gist()
         file = gist.files[filename]
         return file.content
 
@@ -66,11 +73,27 @@ class GistProject(object):
         pass
 
     def new_notebook_object(self, path):
-        pass
+        return GistObject(self, path)
 
     def save_notebook_object(self, nb, path):
-        pass
+        filename = os.path.basename(path)
+        content = current.writes(nb, format=u'json')
+        file = github.InputFileContent(content)
+        files = {filename: file}
+        self.edit_gist(files=files)
 
+    def autosave_notebook(nb, nbo, client_id):
+        print 'autosave not implemeneted'
+
+    def delete_notebook(self, path):
+        filename = os.path.basename(path)
+        files = {filename: github.InputFileContent(None)}
+        self.edit_gist(files=files)
+
+    def edit_gist(self, desc=None, files=None):
+        if desc is None:
+            desc = self.gist.description
+        self.gist.edit(desc, files)
 
     def __hash__(self):
         return hash(self.path)

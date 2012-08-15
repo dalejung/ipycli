@@ -364,11 +364,9 @@ class NotebookManager(LoggingConfigurable):
         except:
             raise web.HTTPError(400, u'Invalid JSON data')
 
-        old_path = self.find_path(notebook_id)
-        ndir, filename = os.path.split(old_path)
-        filename = '.' + filename + '.' + client_id + ".save"
-        path = os.path.join(ndir, filename)
-        self.save_notebook_object(notebook_id, nb, path=path)
+        nbo = self.mapping[notebook_id]
+        backend = nbo.backend
+        backend.autosave_notebook(nb, nbo, client_id)
 
     def rename_notebook(self, notebook_id, data, name=None, format=u'json'):
         """ Separate out rename """
