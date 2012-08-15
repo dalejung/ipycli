@@ -125,8 +125,11 @@ class GistProject(object):
         """
         if isinstance(other, basestring):
             return self.path == other
-        if isinstance(other, GistHub):
-            return self.path == self.path
+        if isinstance(other, GistProject):
+            return self.path == other.path
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
 class GistHub(object):
     def __init__(self, hub):
