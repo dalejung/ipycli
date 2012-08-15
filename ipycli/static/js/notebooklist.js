@@ -186,7 +186,7 @@ var IPython = (function (IPython) {
                     data = eval('['+data+']');
                     data = data[0]
                     notebook_id = data['notebook_id'];
-                    var url = $('body').data('baseProjectUrl') + notebook_id;
+                    var url = window.location.href + notebook_id;
                     w.location = url;
                 };
 
