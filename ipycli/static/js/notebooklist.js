@@ -166,6 +166,35 @@ var IPython = (function (IPython) {
         var h2 = $('<h2/>');
         h2.html(project);
         item_name.append(h2);
+
+        var new_but = $('<button>New Notebook</button>').addClass('new-notebook');
+        new_but.button().click(function (e) {
+                content_type = 'application/json';
+
+                console.log($(this));
+                var par = $(this).parent().parent();
+                project_path = $(par).attr('project');
+                data = {'project_path':project_path};
+                var settings = {
+                    cache : false,
+                    type : "POST",
+                    data : data,
+                };
+
+                var w = window.open('');
+                settings['success'] = function (data, status, xhr) {
+                    data = eval('['+data+']');
+                    data = data[0]
+                    notebook_id = data['notebook_id'];
+                    var url = $('body').data('baseProjectUrl') + notebook_id;
+                    w.location = url;
+                };
+
+                var url = $('body').data('baseProjectUrl') +'new';
+                $.ajax(url, settings);
+            });
+        new_but.button()
+        item_name.append(new_but);
         item.append(item_name);
 
         var project_list = this.element     

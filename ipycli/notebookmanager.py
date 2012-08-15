@@ -47,6 +47,25 @@ from IPython.utils.traitlets import Unicode, List, Dict, Bool, TraitError
 
 from .folder_backend import *
 
+def unique_everseen(iterable, key=None):
+    from itertools import ifilterfalse
+    "List unique elements, preserving order. Remember all elements ever seen."
+    # unique_everseen('AAAABBBCCDAABBB') --> A B C D
+    # unique_everseen('ABBCcAD', str.lower) --> A B C D
+    seen = set()
+    seen_add = seen.add
+    if key is None:
+        for element in ifilterfalse(seen.__contains__, iterable):
+            seen_add(element)
+            yield element
+    else:
+        for element in iterable:
+            k = key(element)
+            if k not in seen:
+                seen_add(k)
+                yield element
+
+
 #-----------------------------------------------------------------------------
 # Classes
 #-----------------------------------------------------------------------------
@@ -145,8 +164,6 @@ class NotebookManager(LoggingConfigurable):
 
     def load_notebooks(self):
         data = self.persister.load()
-        print data
-        return None
         if not data:
             return
         self.notebook_dirs = data[0]
@@ -158,6 +175,8 @@ class NotebookManager(LoggingConfigurable):
         """
             List all notebooks in a dict
         """
+        # bah hack to keep ordered uniqueness
+        self.notebook_dirs = list(unique_everseen(self.notebook_dirs))
         for backend in self.notebook_dirs:
             nbs = backend.notebooks()
             self.all_mapping[backend] = nbs
@@ -308,6 +327,11 @@ class NotebookManager(LoggingConfigurable):
             return backend.get_notebook_object(nb.path)
         except:
             raise web.HTTPError(404, u'1Notebook does not exist: %s' % notebook_id)
+
+    def backend_by_path(self, path):
+        for p in self.notebook_dirs:
+            if p == path:
+                return p
 
     def save_new_notebook(self, data, name=None, format=u'json'):
         """Save a new notebook and return its notebook_id.

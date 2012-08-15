@@ -22,6 +22,9 @@ class GistObject(NBObject):
         return None
 
 class GistProject(object):
+
+    filename_ext = '.ipynb'
+
     def __init__(self, gist, hub):
         words = [w for w in gist.description.split() if not w.startswith("#")]
         self.name = " ".join(words)
@@ -70,10 +73,28 @@ class GistProject(object):
 
     def notebook_exists(self, path):
         """Does a notebook exist?"""
-        pass
+        filename = os.path.basename(path)
+        return filename in self.gist.files
 
     def new_notebook_object(self, path):
         return GistObject(self, path)
+
+    def increment_filename(self, basename):
+        """
+        Return a non-used filename of the form basename<int>.
+        
+        """
+        path = self.path
+        i = 0
+        while True:
+            name = u'%s%i' % (basename,i)
+            name = name + self.filename_ext
+            path = os.path.join(path, name)
+            if not self.notebook_exists(path):
+                break
+            else:
+                i = i+1
+        return path, name
 
     def save_notebook_object(self, nb, path):
         filename = os.path.basename(path)
@@ -82,7 +103,7 @@ class GistProject(object):
         files = {filename: file}
         self.edit_gist(files=files)
 
-    def autosave_notebook(nb, nbo, client_id):
+    def autosave_notebook(self, nb, nbo, client_id):
         print 'autosave not implemeneted'
 
     def delete_notebook(self, path):

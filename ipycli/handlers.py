@@ -279,6 +279,18 @@ class NewHandler(AuthenticatedHandler):
             mathjax_url=self.application.ipython_app.mathjax_url,
         )
 
+    @web.authenticated
+    def post(self):
+        nbm = self.application.notebook_manager
+
+        project_path = self.get_argument('project_path', default=None)
+        backend = nbm.backend_by_path(project_path)
+        name = None
+        notebook_id = nbm.new_notebook(backend=backend, name=name)
+        data = {'notebook_id':notebook_id}
+        self.set_header('Location', '/'+notebook_id)
+        self.finish(jsonapi.dumps(data))
+
 
 class NamedNotebookHandler(AuthenticatedHandler):
 
