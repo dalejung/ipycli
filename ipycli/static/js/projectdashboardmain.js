@@ -33,7 +33,7 @@ $(document).ready(function () {
     var interval_id=0;
     // auto refresh every xx secondes, no need to be fast,
     //  update is done at least when page get focus
-    var time_refresh = 60; // in sec
+    var time_refresh = 600; // in sec
 
     var enable_autorefresh = function(){
         //refresh immediately , then start interval
