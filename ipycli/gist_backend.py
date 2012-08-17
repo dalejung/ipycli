@@ -108,7 +108,9 @@ class GistProject(object):
         self.edit_gist(files=files)
 
     def autosave_notebook(self, nb, nbo, client_id):
-        print 'autosave not implemeneted'
+        path = nbo.path
+        self.save_notebook_object(nb, path=path)
+        print 'autosave notebook {0}'.format(path)
 
     def delete_notebook(self, path):
         filename = os.path.basename(path)
