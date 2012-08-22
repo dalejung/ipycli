@@ -91,11 +91,6 @@ class DirectoryProject(object):
 
         os.unlink(path)
 
-        if self.save_script:
-            old_pypath = os.path.splitext(old_path)[0] + '.py'
-            if os.path.isfile(old_pypath):
-                os.unlink(old_pypath)
-
     def increment_filename(self, basename):
         """Return a non-used filename of the form basename<int>.
         
@@ -116,9 +111,15 @@ class DirectoryProject(object):
         return path, name
 
 class NBObject(object):
-    def __init__(self, backend, path):
+    def __init__(self, backend, path, name=None):
         self.backend = backend
         self.path = path
+        self._name = name 
+
+    @property
+    def name(self):
+        return self._name or os.path.basename(self.path)
+
 
     def __repr__(self):
         return self.path

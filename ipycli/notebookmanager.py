@@ -144,6 +144,7 @@ class NotebookManager(LoggingConfigurable):
 
         self.ghub = None
         self.notebook_dirs = []
+        self.gist_projects = []
         self.add_notebook_dir(self.notebook_dir)
         self.persister = NotebookListPersister()
         self.load_notebooks()
@@ -152,17 +153,8 @@ class NotebookManager(LoggingConfigurable):
         project = DirectoryProject(dir, self.filename_ext)
         self.notebook_dirs.append(project)
 
-    def ndir_notebooks(self, project):
-        """List all notebooks in the notebook dir.
-
-        This returns a list of dicts of the form::
-
-            dict(notebook_id=notebook,name=name)
-        """
-        names = project.notebooks()
-        return names
-
     def load_notebooks(self):
+        return None
         data = self.persister.load()
         if not data:
             return
@@ -171,6 +163,10 @@ class NotebookManager(LoggingConfigurable):
         for path in pathed_notebooks:
             self.get_pathed_notebook(path)
 
+    @property
+    def notebook_projects(self):
+        return itertools.chain(self.notebook_dirs, self.gist_projects)
+
     def list_notebooks(self):
         """
             List all notebooks in a dict
@@ -178,10 +174,11 @@ class NotebookManager(LoggingConfigurable):
         # HACK
         if self.ghub:
             projects = self.ghub.get_gist_projects()
-            self.notebook_dirs.extend(projects)
-        self.notebook_dirs = list(unique_everseen(self.notebook_dirs))
+            self.gist_projects = projects
         # ENDHACK
-        for backend in self.notebook_dirs:
+
+
+        for backend in self.notebook_projects:
             nbs = backend.notebooks()
             self.all_mapping[backend] = nbs
 
@@ -197,7 +194,7 @@ class NotebookManager(LoggingConfigurable):
                 notebook_id = self.new_notebook_id(nb)
             else:
                 notebook_id = self.rev_mapping[nb]
-            data.append(dict(notebook_id=notebook_id,name=nb.path))
+            data.append(dict(notebook_id=notebook_id,path=nb.path, name=nb.name))
 
         data = sorted(data, key=lambda item: item['name'])
         return data
@@ -333,9 +330,17 @@ class NotebookManager(LoggingConfigurable):
             raise web.HTTPError(404, u'1Notebook does not exist: %s' % notebook_id)
 
     def backend_by_path(self, path):
-        for p in self.notebook_dirs:
+        """
+            path is project path which is unique to each project
+        """
+        for p in self.notebook_projects:
             if p == path:
                 return p
+
+    def backend_by_notebook_id(self, notebook_id):
+        nbo = self.mapping[notebook_id]
+        backend = nbo.backend
+        return backend
 
     def save_new_notebook(self, data, name=None, format=u'json'):
         """Save a new notebook and return its notebook_id.
@@ -416,7 +421,6 @@ class NotebookManager(LoggingConfigurable):
 
         # TODO should this be done elsehwere?
         nbo.path = name
-        print nbo.path
 
         self.set_notebook_path(notebook_id, nbo)
 

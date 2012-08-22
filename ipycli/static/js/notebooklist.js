@@ -148,11 +148,12 @@ var IPython = (function (IPython) {
         files = data['files'];
         for(var i=0; i < files.length;i++) {
             var nb = files[i];
-            var proj = null
-            if (nb.name.indexOf('/') == -1){
-                proj = base_project;
+            var proj = null;
+            if (nb.project_path) {
+                proj = nb.project_path;
+                name = nb.name;
             } else {
-                bits = nb.name.split('/');
+                bits = nb.path.split('/');
                 name = bits.pop();
                 proj = bits.join('/');
             }
@@ -161,6 +162,7 @@ var IPython = (function (IPython) {
             }
             new_data[proj].push(nb);
         }
+
         for (project_path in new_data) {
           var project = null;
           for (p in projects) {
@@ -168,7 +170,9 @@ var IPython = (function (IPython) {
               project = projects[p];
             }
           }
-          project['files'] = new_data[project_path];
+          if (project) {
+              project['files'] = new_data[project_path];
+          }
         }
         return projects;
     }
@@ -245,7 +249,7 @@ var IPython = (function (IPython) {
             $('<a/>').
             attr('href', href).
             attr('target','_blank').
-            text(nbname.split('/').pop())
+            text(nbname)
         );
         var e = item.find('.item_name');
         if (e.length === 0) {
