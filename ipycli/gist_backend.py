@@ -68,15 +68,6 @@ class GistProject(object):
     def name(self):
         return self._name + "        [{0}]".format(self.id)
 
-    def get_notebooks(self):
-        self.refresh_gist()
-        files = self.gist.files
-        notebooks = []
-        for file in files:
-            if file.endswith(".ipynb"):
-                notebooks.append(file)
-
-        return notebooks
 
     def refresh_gist(self, id=None):
         if id is None:
@@ -94,6 +85,15 @@ class GistProject(object):
         gist = self.refresh_gist()
         file = gist.files[filename]
         return file.content
+
+    def get_notebooks(self):
+        files = self.gist.files
+        notebooks = []
+        for file in files:
+            if file.endswith(".ipynb"):
+                notebooks.append(file)
+
+        return notebooks
 
     def notebooks(self):
         notebooks = [(os.path.join(self.path,nb), nb) for nb in self.get_notebooks()]
