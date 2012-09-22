@@ -365,6 +365,7 @@ class NotebookManager(LoggingConfigurable):
 
         path = os.path.join(self.notebook_dir, name+self.filename_ext)
         backend = None
+        print 'save_new_notebook'
         nbo = backend.new_notebook_object(path)
         notebook_id = self.new_notebook_id(nbo)
         self.save_notebook_object(notebook_id, nb)

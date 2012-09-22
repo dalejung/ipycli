@@ -7,6 +7,9 @@ from IPython.nbformat import current
 from ipycli.folder_backend import NBObject
 
 def get_notebook_project_gists(gists):
+    """
+        Get gists as project-dir
+    """
     nb_gists = []
     for gist in gists:
         desc = gist.description
@@ -17,6 +20,9 @@ def get_notebook_project_gists(gists):
     return nb_gists
 
 def get_notebook_single_gists(gists):
+    """
+        Get tagged gists
+    """
     tagged = {}
     for gist in gists:
         desc = gist.description
@@ -41,6 +47,15 @@ def get_gist_name(gist):
     words = [w for w in gist.description.split() if not w.startswith("#")]
     name = " ".join(words)
     return name
+
+def new_notebook_files(name='default.ipynb'):
+    # make a new file  ugh    
+    metadata = current.new_metadata(name=name)
+    nb = current.new_notebook(metadata=metadata)
+    content = current.writes(nb, format=u'json')
+    file = github.InputFileContent(content)
+    files = {name: file}
+    return files
 
 class GistObject(NBObject):
     def get_wd(self):
@@ -126,12 +141,11 @@ class GistProject(object):
         Return a non-used filename of the form basename<int>.
         
         """
-        path = self.path
         i = 0
         while True:
             name = u'%s%i' % (basename,i)
             name = name + self.filename_ext
-            path = os.path.join(path, name)
+            path = os.path.join(self.path, name)
             if not self.notebook_exists(path):
                 break
             else:
@@ -184,7 +198,10 @@ class TaggedGistProject(GistProject):
         for gist in gists:
             self.gists[gist.id] = gist
 
-        self.path = "gisttag:{0}/{1}".format(tag, tag)
+        self.path = "gisttag:/{0}".format(tag)
+        # also match by gisttag:#tag/filename
+        self.path_mapping = {}
+        self.tag = tag
 
     @property
     def name(self):
@@ -202,6 +219,10 @@ class TaggedGistProject(GistProject):
         for gist in self.gists.values():
             if gist.html_url == path:
                 return gist
+        # this only exists on first creation. Afterwards path normalizes
+        # to the gist html_url
+        gist = self.path_mapping.setdefault(path, None)
+        return gist
 
     def get_notebook_object(self, path):
         gist = self._get_gist_by_path(path)
@@ -223,11 +244,7 @@ class TaggedGistProject(GistProject):
             return file.content
         
         # make a new file  ugh    
-        metadata = current.new_metadata(name="default.ipynb")
-        nb = current.new_notebook(metadata=metadata)
-        content = current.writes(nb, format=u'json')
-        file = github.InputFileContent(content)
-        files = {'default.ipynb': file}
+        files = new_notebook_files()
         self.edit_gist(gist, files=files)
         # hold to your butts, recursion!
         return self.get_notebook(gist)
@@ -244,6 +261,28 @@ class TaggedGistProject(GistProject):
         path = nbo.path
         self.save_notebook_object(nb, path=path)
         print 'autosave notebook {0}'.format(path)
+
+    def save_new_notebook_object(self, nb, path):
+        _, tag, filename = path.split('/')
+        content = current.writes(nb, format=u'json')
+        file = github.InputFileContent(content)
+        files = {filename: file}
+        desc = "IPython Notebook #notebook {0}".format(tag)
+
+        gist = self.hub.get_user().create_gist(False, files, desc)
+        self.gists[gist.id] = gist
+
+    def new_notebook_object(self, path):
+        # we create gist here because we are using gist.html_url as path
+        # this creates a redundancy with save_notebook_object
+        _, tag, filename = path.split('/')
+        files = new_notebook_files(filename)
+        desc = "IPython Notebook #notebook {0}".format(tag)
+        gist = self.hub.get_user().create_gist(False, files, desc)
+        self.gists[gist.id] = gist
+        self.path_mapping[path] = gist
+
+        return GistObject(self, gist.html_url)
 
     def save_notebook_object(self, nb, path):
         gist = self._get_gist_by_path(path)
