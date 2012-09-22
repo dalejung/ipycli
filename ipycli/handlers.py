@@ -653,6 +653,8 @@ class NotebookRootHandler(AuthenticatedHandler):
 
         backends = []
         for backend in nbm.notebook_projects:
+            if hasattr(backend, 'tag') and backend.tag == '#transient': 
+                continue
             b = {'name': backend.name, 'path': backend.path}
             backends.append(b)
 
@@ -671,6 +673,28 @@ class NotebookRootHandler(AuthenticatedHandler):
             notebook_id = nbm.new_notebook()
         self.set_header('Location', '/'+notebook_id)
         self.finish(jsonapi.dumps(notebook_id))
+
+class NotebookTagHandler(AuthenticatedHandler):
+
+    @authenticate_unless_readonly
+    def get(self, tag):
+        nbm = self.application.notebook_manager
+        km = self.application.kernel_manager
+        files = nbm.tagged_notebooks(tag)
+
+        backend = None
+        for f in files :
+            f['kernel_id'] = km.kernel_for_notebook(f['notebook_id'])
+            backend = nbm.backend_by_notebook_id(f['notebook_id'])
+            f['project_path'] = backend.path
+
+        # all these should be from the same backend, for now
+        backends = []
+        b = {'name': backend.name, 'path': backend.path}
+        backends.append(b)
+
+        data = {'files': files, 'projects': backends}
+        self.finish(jsonapi.dumps(data))
 
 
 class NotebookHandler(AuthenticatedHandler):

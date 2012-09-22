@@ -167,29 +167,42 @@ class NotebookManager(LoggingConfigurable):
     def notebook_projects(self):
         return itertools.chain(self.notebook_dirs, self.gist_projects)
 
+    def tagged_notebooks(self, tag):
+        """
+            List all notebooks in a dict
+        """
+        self.refresh_notebooks()
+
+        notebooks = []
+        tag = '#' + tag
+        for backend in self.gist_projects:
+            if not hasattr(backend, 'tag'):
+                continue
+            if backend.tag == tag:
+                notebooks = backend.notebooks()
+
+        return self.output_notebooks(notebooks)
+
     def list_notebooks(self):
         """
             List all notebooks in a dict
         """
-        # HACK
-        if self.ghub:
-            projects = self.ghub.get_gist_projects()
-            self.gist_projects = projects
-        # ENDHACK
-
-
-        for backend in self.notebook_projects:
-            nbs = backend.notebooks()
-            self.all_mapping[backend] = nbs
-
-        notebooks = itertools.chain(*self.all_mapping.values())
+        self.refresh_notebooks()
+        # regular listing doesn't show transients
+        notebooks = itertools.chain(*[nbs for backend, nbs 
+                                      in self.all_mapping.items()
+                                      if not hasattr(backend, 'tag') 
+                                      or backend.tag != '#transient'])
         pathed_notebooks = self.pathed_notebook_list()
 
         self.persister.check(self.notebook_dirs, pathed_notebooks)
 
         all_notebooks = itertools.chain(notebooks, pathed_notebooks)
+        return self.output_notebooks(all_notebooks)
+
+    def output_notebooks(self, notebooks):
         data = []
-        for nb in all_notebooks:
+        for nb in notebooks:
             if nb not in self.rev_mapping:
                 notebook_id = self.new_notebook_id(nb)
             else:
@@ -198,6 +211,17 @@ class NotebookManager(LoggingConfigurable):
 
         data = sorted(data, key=lambda item: item['name'])
         return data
+
+    def refresh_notebooks(self):
+        # HACK
+        if self.ghub:
+            projects = self.ghub.get_gist_projects()
+            self.gist_projects = projects
+        # ENDHACK
+
+        for backend in self.notebook_projects:
+            nbs = backend.notebooks()
+            self.all_mapping[backend] = nbs
 
     def pathed_notebook_list(self):
         self.verify_pathed_files()

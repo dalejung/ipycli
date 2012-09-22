@@ -26,6 +26,7 @@ data-read-only={{read_only}}
     <ul>
         <li><a href="#tab1">Notebooks</a></li>
         <li><a href="#tab2">Clusters</a></li>
+        <li><a href="#tab3">Transient</a></li>
     </ul>
 
     <div id="tab1">
@@ -65,6 +66,21 @@ data-read-only={{read_only}}
             </div>
         </div>
 
+    </div>
+    <div id="tab3">
+        {% if logged_in or not read_only %}
+        <div id="notebook_toolbar">
+            <form id='alternate_upload'  class='alternate_upload' >
+                <span id="drag_info" style="position:absolute" >
+                    To import a notebook, drag the file onto the listing below or <strong>click here</strong>.
+                    </span>
+                <input type="file" name="datafile" class="fileinput" multiple='multiple'>
+            </form>
+        </div>
+        {% end %}
+
+        <div id="transient-notebook_list">
+        </div>
     </div>
 </div>
 

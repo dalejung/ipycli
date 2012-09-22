@@ -11,8 +11,9 @@
 
 var IPython = (function (IPython) {
 
-    var NotebookList = function (selector) {
+    var NotebookList = function (selector, tag) {
         this.selector = selector;
+        this.tag = tag;
         if (this.selector !== undefined) {
             this.element = $(selector);
             this.style();
@@ -36,7 +37,7 @@ var IPython = (function (IPython) {
             return;
         }
         var that = this;
-        $('#refresh_notebook_list').click(function () {
+        this.element.find('#refresh_notebook_list').click(function () {
             that.load_list();
         });
         this.element.bind('dragover', function () {
@@ -94,13 +95,17 @@ var IPython = (function (IPython) {
             dataType : "json",
             success : $.proxy(this.list_loaded, this)
         };
-        var url = $('body').data('baseProjectUrl') + 'notebooks';
+        if (this.tag) {
+          var url = $('body').data('baseProjectUrl') + 'tag/' + this.tag;
+        } else {
+          var url = $('body').data('baseProjectUrl') + 'notebooks';
+        }
         $.ajax(url, settings);
     };
 
 
     NotebookList.prototype.project_notebook_list_load = function (project) {
-        pdiv = $('.project-notebook-list[project="'+project['path']+'"]')[0];
+        pdiv = this.element.find('.project-notebook-list[project="'+project['path']+'"]')[0];
         if(!pdiv){
             pdiv = this.new_project_div(project);
         }
@@ -205,7 +210,8 @@ var IPython = (function (IPython) {
                     data = eval('['+data+']');
                     data = data[0]
                     notebook_id = data['notebook_id'];
-                    var url = window.location.href + notebook_id;
+                    var href = window.location.href.split('#')[0]
+                    var url = href + notebook_id;
                     w.location = url;
                 };
 
