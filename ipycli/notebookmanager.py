@@ -326,8 +326,8 @@ class NotebookManager(LoggingConfigurable):
         backend = nb.backend
         try:
             return backend.get_notebook_object(nb.path)
-        except:
-            raise web.HTTPError(404, u'1Notebook does not exist: %s' % notebook_id)
+        except Exception as e:
+            raise web.HTTPError(404, u'Notebook does not exist: %s, Err:%s' % (notebook_id, str(e)))
 
     def backend_by_path(self, path):
         """
@@ -418,7 +418,13 @@ class NotebookManager(LoggingConfigurable):
         old_path = self.find_path(notebook_id)
         nbo = self.mapping[notebook_id]
         backend = nbo.backend
+
+        # shortcircuit
+        if hasattr(backend, 'rename_notebook'):
+            return backend.rename_notebook(nb, old_path)
+
         name = nb.metadata.name + self.filename_ext
+
 
         # TODO should this be done elsehwere?
         nbo.path = name

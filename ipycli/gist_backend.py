@@ -48,6 +48,12 @@ def get_gist_name(gist):
     name = " ".join(words)
     return name
 
+def change_gist_name(gist, name):
+    desc = gist.description
+    tags = [tag for tag in desc.split(" ") if tag.startswith("#")]
+    new_name = name + " " + " ".join(tags)
+    return new_name
+
 def new_notebook_files(name='default.ipynb'):
     # make a new file  ugh    
     metadata = current.new_metadata(name=name)
@@ -207,8 +213,12 @@ class TaggedGistProject(GistProject):
     def name(self):
         return self._name
 
+    def _gist_name(self, gist):
+        return get_gist_name(gist) + "   " + gist.id
+
+
     def get_notebooks(self):
-        return [(gist.html_url, get_gist_name(gist) + "   " + gist.id) for gist in self.gists.values()]
+        return [(gist.html_url, self._gist_name(gist)) for gist in self.gists.values()]
 
     def notebooks(self):
         notebooks = self.get_notebooks()
@@ -234,7 +244,8 @@ class TaggedGistProject(GistProject):
         except:
             raise
         # Always use the filename as the notebook name.
-        nb.metadata.name = path
+        name = self._gist_name(gist)
+        nb.metadata.name = name
         return last_modified, nb
 
     def get_notebook(self, gist):
@@ -262,16 +273,6 @@ class TaggedGistProject(GistProject):
         self.save_notebook_object(nb, path=path)
         print 'autosave notebook {0}'.format(path)
 
-    def save_new_notebook_object(self, nb, path):
-        _, tag, filename = path.split('/')
-        content = current.writes(nb, format=u'json')
-        file = github.InputFileContent(content)
-        files = {filename: file}
-        desc = "IPython Notebook #notebook {0}".format(tag)
-
-        gist = self.hub.get_user().create_gist(False, files, desc)
-        self.gists[gist.id] = gist
-
     def new_notebook_object(self, path):
         # we create gist here because we are using gist.html_url as path
         # this creates a redundancy with save_notebook_object
@@ -282,7 +283,7 @@ class TaggedGistProject(GistProject):
         self.gists[gist.id] = gist
         self.path_mapping[path] = gist
 
-        return GistObject(self, gist.html_url)
+        return GistObject(self, gist.html_url, filename)
 
     def save_notebook_object(self, nb, path):
         gist = self._get_gist_by_path(path)
@@ -290,7 +291,13 @@ class TaggedGistProject(GistProject):
         content = current.writes(nb, format=u'json')
         file = github.InputFileContent(content)
         files = {gfile.filename: file}
-        self.edit_gist(gist, files=files)
+        # name and desc are synched for gist-notebooks
+        desc = change_gist_name(gist, nb.metadata.name)
+        self.edit_gist(gist, files=files, desc=desc)
+
+    def rename_notebook(self, nb, old_path):
+        # no need to delete, just change desc
+        self.save_notebook_object(nb, old_path)
 
     def delete_notebook(self, path):
         gist = self._get_gist_by_path(path)
