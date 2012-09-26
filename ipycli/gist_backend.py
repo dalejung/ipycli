@@ -214,8 +214,10 @@ class TaggedGistProject(GistProject):
         return self._name
 
     def _gist_name(self, gist):
-        return get_gist_name(gist) + "   " + gist.id
-
+        name =  get_gist_name(gist) 
+        if gist.public and gist.id not in name.split():
+            name = name + "   " + gist.id
+        return name
 
     def get_notebooks(self):
         return [(gist.html_url, self._gist_name(gist)) for gist in self.gists.values()]
