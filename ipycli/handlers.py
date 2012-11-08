@@ -653,8 +653,6 @@ class NotebookRootHandler(AuthenticatedHandler):
 
         backends = []
         for backend in nbm.notebook_projects:
-            if hasattr(backend, 'tag') and backend.tag == '#transient': 
-                continue
             b = {'name': backend.name, 'path': backend.path}
             backends.append(b)
 

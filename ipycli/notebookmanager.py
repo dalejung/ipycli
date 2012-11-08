@@ -181,7 +181,7 @@ class NotebookManager(LoggingConfigurable):
             if backend.tag == tag:
                 notebooks = backend.notebooks()
 
-        return self.output_notebooks(notebooks)
+        return self.output_notebooks(notebooks, sort=False)
 
     def list_notebooks(self):
         """
@@ -189,18 +189,32 @@ class NotebookManager(LoggingConfigurable):
         """
         self.refresh_notebooks()
         # regular listing doesn't show transients
-        notebooks = itertools.chain(*[nbs for backend, nbs 
-                                      in self.all_mapping.items()
-                                      if not hasattr(backend, 'tag') 
-                                      or backend.tag != '#transient'])
+        notebooks = []
+        transients = []
+
+        for backend, nbs in self.all_mapping.items():
+            if not hasattr(backend, 'tag'):
+                continue
+            if backend.tag == '#transient':
+                transients = nbs
+            else:
+                notebooks.append(nbs)
+
+        notebooks = itertools.chain(*notebooks)
+
         pathed_notebooks = self.pathed_notebook_list()
 
         self.persister.check(self.notebook_dirs, pathed_notebooks)
 
         all_notebooks = itertools.chain(notebooks, pathed_notebooks)
+        all_notebooks = sorted(all_notebooks, key=lambda nb: nb.name)
+
+        # show the last 5 transients
+        all_notebooks = transients[-5:] + all_notebooks
+
         return self.output_notebooks(all_notebooks)
 
-    def output_notebooks(self, notebooks):
+    def output_notebooks(self, notebooks, sort=True):
         data = []
         for nb in notebooks:
             if nb not in self.rev_mapping:
@@ -209,7 +223,6 @@ class NotebookManager(LoggingConfigurable):
                 notebook_id = self.rev_mapping[nb]
             data.append(dict(notebook_id=notebook_id,path=nb.path, name=nb.name))
 
-        data = sorted(data, key=lambda item: item['name'])
         return data
 
     def refresh_notebooks(self):

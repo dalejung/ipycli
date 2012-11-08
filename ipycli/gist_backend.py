@@ -5,6 +5,7 @@ from StringIO import StringIO
 import github
 from IPython.nbformat import current
 from ipycli.folder_backend import NBObject
+from collections import OrderedDict
 
 def get_notebook_project_gists(gists):
     """
@@ -209,6 +210,7 @@ class TaggedGistProject(GistProject):
         self.path_mapping = {}
         self.tag = tag
 
+
     @property
     def name(self):
         return self._name
@@ -220,7 +222,8 @@ class TaggedGistProject(GistProject):
         return name
 
     def get_notebooks(self):
-        return [(gist.html_url, self._gist_name(gist)) for gist in self.gists.values()]
+        gists = sorted(self.gists.values(), key=lambda x: x.updated_at)
+        return [(gist.html_url, self._gist_name(gist)) for gist in gists]
 
     def notebooks(self):
         notebooks = self.get_notebooks()
