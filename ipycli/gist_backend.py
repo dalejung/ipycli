@@ -7,20 +7,23 @@ from IPython.nbformat import current
 from ipycli.folder_backend import NBObject
 from collections import OrderedDict
 
-def get_notebook_project_gists(gists):
+def get_notebook_project_gists(gists, show_all=False):
     """
         Get gists as project-dir
     """
     nb_gists = []
     for gist in gists:
         desc = gist.description
-        words = desc.split(" ")
-        if "#notebook-project" in words and "#inactive" not in words:
+        tags = get_gist_tags(desc)
+        if "#notebook-project" not in tags:
+            continue
+        active = "#inactive" not in tags
+        if active or show_all:
             nb_gists.append(gist)
 
     return nb_gists
 
-def get_notebook_single_gists(gists):
+def get_notebook_single_gists(gists, show_all=False):
     """
         Get tagged gists
     """
@@ -29,7 +32,11 @@ def get_notebook_single_gists(gists):
         desc = gist.description
 
         tags = get_gist_tags(desc)
-        if "#notebook" not in tags or "#inactive" in tags:
+        if "#notebook" not in tags:
+            continue
+
+        active = "#inactive" not in tags
+        if not active and not show_all:
             continue
 
         for tag in tags:
@@ -65,6 +72,11 @@ def new_notebook_files(name='default.ipynb'):
     return files
 
 class GistObject(NBObject):
+    def __init__(self, *args, **kwargs):
+        tags = kwargs.pop('tags', [])
+        super(GistObject, self).__init__(*args, **kwargs)
+        self.tags = tags
+
     def get_wd(self):
         """ Get Working Directory """
         return None
@@ -81,6 +93,11 @@ class GistProject(object):
         self.gists = {gist.id:gist}
         self.id = gist.id
         self.path = gist.html_url
+        self.tags = get_gist_tags(gist.description)
+
+    def __repr__(self):
+        cn = self.__class__.__name__
+        return "{0}: {1}".format(cn, self.name)
 
     @property
     def gist(self):
@@ -119,7 +136,7 @@ class GistProject(object):
 
     def notebooks(self):
         notebooks = [(os.path.join(self.path,nb), nb) for nb in self.get_notebooks()]
-        notebooks = [GistObject(self, path) for path, name in notebooks]
+        notebooks = [GistObject(self, path, tags=self.tags) for path, name in notebooks]
         return notebooks
 
     def get_notebook_object(self, path):
@@ -223,11 +240,12 @@ class TaggedGistProject(GistProject):
 
     def get_notebooks(self):
         gists = sorted(self.gists.values(), key=lambda x: x.updated_at)
-        return [(gist.html_url, self._gist_name(gist)) for gist in gists]
+        return [(gist.html_url, self._gist_name(gist), gist) for gist in gists]
 
     def notebooks(self):
         notebooks = self.get_notebooks()
-        notebooks = [GistObject(self, path, name) for path, name in notebooks]
+        notebooks = [GistObject(self, path, name, tags=get_gist_tags(gist.description)) for path, name, gist 
+                     in notebooks]
         return notebooks
 
     def _get_gist_by_path(self, path):
@@ -314,13 +332,13 @@ class GistHub(object):
         self.hub = hub
         self.user = hub.get_user()
 
-    def get_gist_projects(self):
+    def get_gist_projects(self, show_all=True):
         gists = self.user.get_gists()
 
-        project_gists = get_notebook_project_gists(gists)
+        project_gists = get_notebook_project_gists(gists, show_all=show_all)
         projects = [GistProject(gist, self.hub) for gist in project_gists]
 
-        single_gists = get_notebook_single_gists(gists)
+        single_gists = get_notebook_single_gists(gists, show_all=show_all)
         singles = [TaggedGistProject(tag, tgists, self.hub) for tag, tgists 
                    in single_gists.items()]
 

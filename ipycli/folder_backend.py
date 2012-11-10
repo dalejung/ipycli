@@ -115,6 +115,7 @@ class NBObject(object):
         self.backend = backend
         self.path = path
         self._name = name 
+        self.tags = []
 
     @property
     def name(self):

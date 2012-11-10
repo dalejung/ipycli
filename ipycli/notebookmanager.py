@@ -185,6 +185,38 @@ class NotebookManager(LoggingConfigurable):
 
     def list_notebooks(self):
         """
+            List both inactive and active notebooks
+        """
+        self.refresh_notebooks()
+        # regular listing doesn't show transients
+        notebooks = []
+        transients = []
+
+        for backend, nbs in self.all_mapping.items():
+            if hasattr(backend, 'tag') and backend.tag == '#transient':
+                transients = nbs
+            else:
+                notebooks.append(nbs)
+
+        notebooks = itertools.chain(*notebooks)
+        notebooks = list(notebooks)
+
+        pathed_notebooks = self.pathed_notebook_list()
+
+        self.persister.check(self.notebook_dirs, pathed_notebooks)
+
+
+        all_notebooks = itertools.chain(notebooks, pathed_notebooks)
+        all_notebooks = sorted(all_notebooks, key=lambda nb: nb.name)
+        all_notebooks = [notebook for notebook in all_notebooks if '#inactive' not in notebook.tags]
+
+        # show the last 5 transients
+        all_notebooks = transients[-5:] + all_notebooks
+
+        return self.output_notebooks(all_notebooks)
+
+    def all_notebooks(self):
+        """
             List all notebooks in a dict
         """
         self.refresh_notebooks()
