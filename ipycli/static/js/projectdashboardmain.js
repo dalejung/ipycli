@@ -29,6 +29,7 @@ $(document).ready(function () {
     IPython.notebook_list = new IPython.NotebookList('div#notebook_list');
     IPython.cluster_list = new IPython.ClusterList('div#cluster_list');
     IPython.transient_notebook_list = new IPython.NotebookList('div#transient-notebook_list', 'transient');
+    IPython.showall_notebook_list = new IPython.NotebookList('div#showall-notebook_list', 'showall');
     IPython.login_widget = new IPython.LoginWidget('span#login_widget');
 
     var interval_id=0;
@@ -42,6 +43,7 @@ $(document).ready(function () {
         {
             IPython.notebook_list.load_list();
             IPython.transient_notebook_list.load_list();
+            IPython.showall_notebook_list.load_list();
             IPython.cluster_list.load_list();
         }
         if (!interval_id){
@@ -50,6 +52,7 @@ $(document).ready(function () {
                     {
                         IPython.notebook_list.load_list();
                         IPython.transient_notebook_list.load_list();
+                        IPython.showall_notebook_list.load_list();
                         IPython.cluster_list.load_list();
                     }
                 }, time_refresh*1000);

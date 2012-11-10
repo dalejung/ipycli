@@ -682,7 +682,7 @@ class AllNotebookRootHandler(AuthenticatedHandler):
     def get(self):
         nbm = self.application.notebook_manager
         km = self.application.kernel_manager
-        files = nbm.list_notebooks()
+        files = nbm.all_notebooks()
         for f in files :
             f['kernel_id'] = km.kernel_for_notebook(f['notebook_id'])
             backend = nbm.backend_by_notebook_id(f['notebook_id'])

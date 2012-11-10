@@ -95,10 +95,13 @@ var IPython = (function (IPython) {
             dataType : "json",
             success : $.proxy(this.list_loaded, this)
         };
+        var url = $('body').data('baseProjectUrl') + 'notebooks';
         if (this.tag) {
-          var url = $('body').data('baseProjectUrl') + 'tag/' + this.tag;
-        } else {
-          var url = $('body').data('baseProjectUrl') + 'notebooks';
+          url = $('body').data('baseProjectUrl') + 'tag/' + this.tag;
+          if (this.tag == 'showall') {
+            // meh
+            url = $('body').data('baseProjectUrl') + 'all_notebooks';
+          }
         }
         $.ajax(url, settings);
     };

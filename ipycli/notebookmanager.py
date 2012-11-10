@@ -208,7 +208,9 @@ class NotebookManager(LoggingConfigurable):
 
         all_notebooks = itertools.chain(notebooks, pathed_notebooks)
         all_notebooks = sorted(all_notebooks, key=lambda nb: nb.name)
+
         all_notebooks = [notebook for notebook in all_notebooks if '#inactive' not in notebook.tags]
+        transients = [notebook for notebook in transients if '#inactive' not in notebook.tags]
 
         # show the last 5 transients
         all_notebooks = transients[-5:] + all_notebooks
@@ -222,15 +224,9 @@ class NotebookManager(LoggingConfigurable):
         self.refresh_notebooks()
         # regular listing doesn't show transients
         notebooks = []
-        transients = []
 
         for backend, nbs in self.all_mapping.items():
-            if not hasattr(backend, 'tag'):
-                continue
-            if backend.tag == '#transient':
-                transients = nbs
-            else:
-                notebooks.append(nbs)
+            notebooks.append(nbs)
 
         notebooks = itertools.chain(*notebooks)
 
@@ -240,9 +236,6 @@ class NotebookManager(LoggingConfigurable):
 
         all_notebooks = itertools.chain(notebooks, pathed_notebooks)
         all_notebooks = sorted(all_notebooks, key=lambda nb: nb.name)
-
-        # show the last 5 transients
-        all_notebooks = transients[-5:] + all_notebooks
 
         return self.output_notebooks(all_notebooks)
 
