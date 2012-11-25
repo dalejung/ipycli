@@ -93,7 +93,7 @@ var IPython = (function (IPython) {
 
 
         $(this.element).keydown(function (event) {
-            // console.log(event);
+            idleTime = 0;
             if (that.read_only) return true;
             
             // Save (CTRL+S) or (AppleKey+S) 
@@ -1180,6 +1180,12 @@ var IPython = (function (IPython) {
     };
 
     Notebook.prototype.autosave_notebook = function () {
+        var cell = this.get_selected_cell();
+        var vim_mode = cell.code_mirror.getOption('keyMap');
+        if (vim_mode == 'vim-insert') {
+          console.log("aborting autosave: in insert mode");
+            return;
+        }
         // We may want to move the name/id/nbformat logic inside toJSON?
         var data = this.toJSON();
         data.metadata.name = this.notebook_name;
