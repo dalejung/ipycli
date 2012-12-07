@@ -5,22 +5,26 @@ import urllib
 
 PORT = 8888
 HOST = "127.0.0.1"
+DEBUG = False
 
-def call(path, cmd, host=HOST, port=PORT):
-    url = "http://%s:%d/%s/%s" % (host, port, cmd, path)
-    print url
+def call(cmd, path='', host=HOST, port=PORT):
+    if DEBUG:
+        url = "http://%s:%d/%s/%s" % (host, port, cmd, path)
+        print url
     path = urllib.quote_plus(path)
     url = "http://%s:%d/%s/%s" % (host, port, cmd, path)
-    urllib2.urlopen(url)
+    if url[-1] == '/':
+        url = url[:-1]
+    return urllib2.urlopen(url)
 
 def open_url(path, host=HOST, port=PORT):
-    call(path, 'n', host, port)
+    call('n', path, host, port)
 
 def new_url(path, host=HOST, port=PORT):
-    call(path, 'new', host, port)
+    call('new', path, host, port)
 
 def add_dir(path, host=HOST, port=PORT):
-    call(path, 'add_dir', host, port)
+    call('add_dir', path, host, port)
 
 
 def open_notebook(fullpath):
@@ -37,26 +41,74 @@ def open_notebook(fullpath):
     fullpath = os.path.join(path, file)
     new_url(fullpath)
 
+def add_notebooks(action, filepath, cwd):
+    fullpath = os.path.join(cwd, filepath)
+    if action == "notebook":
+        open_notebook(fullpath)
+    elif action == "add-dir":
+        add_dir(fullpath)
+
+def _get_active_notebooks():
+    import json
+    jstring = call('active_notebooks').read()
+    data = json.loads(jstring)
+    return data
+
+def list_kernels():
+    data = _get_active_notebooks()
+    out = []
+    out.append("Active Kernels:")
+    out.append("====================")
+
+    for i, f in enumerate(data['files']):
+        s = "[{0}] {1}: {2}".format(i, f['name'], f['kernel_id'])
+        out.append(s)
+    out.append("====================")
+    print "\n".join(out)
+
+def attach(kernel):
+    try:
+        pos = int(kernel)
+        data = _get_active_notebooks()
+        notebook = data['files'][pos]
+    except:
+        pass
+
+    if notebook:
+        start_with_notebook(notebook)
+
+def start_with_notebook(notebook):
+    """
+        Start a terminal app attached to a notebook
+    """
+    from IPython.frontend.terminal.ipapp import TerminalIPythonApp
+    kernel = 'kernel-{0}.json'.format(notebook['kernel_id'])
+    # TODO support other submodules like qtconsole
+    argv = ['console', '--existing', kernel]
+    app = TerminalIPythonApp.instance()
+    app.initialize(argv)
+    app.start()
+
+
 if __name__ == '__main__':
     import argparse
     import os
     parser = argparse.ArgumentParser(description="Start a notebook");
 
-    #parser.add_argument('action', nargs="?", action="store", default="notebook")
-    parser.add_argument('filepath', action="store")
+    parser.add_argument('action', nargs="?", action="store", default="list")
+    parser.add_argument('target', nargs="?", action="store")
 
     args = parser.parse_args()
 
-    filepath = args.filepath
-    #action = args.action
+    target = args.target
+    action = args.action
     cwd = os.getcwd()
 
-    fullpath = os.path.join(cwd, filepath)
-    action = 'notebook'
-    if os.path.isdir(fullpath):
-        action = 'add-dir'
+    if action in ['add-dir', 'notebook']:
+        add_notebooks(action, target, cwd)
 
-    if action == "notebook":
-        open_notebook(fullpath)
-    elif action == "add-dir":
-        add_dir(fullpath)
+    if action in ['list']:
+        list_kernels()
+
+    if action in ['attach']:
+        attach(target)

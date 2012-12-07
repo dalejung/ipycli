@@ -38,6 +38,18 @@ try:
 except ImportError:
     publish_string = None
 
+
+_old_auth = web.authenticated
+def debug_auth(*args, **kwargs):
+    old_wrapped = _old_auth(*args, **kwargs)
+    def new_wrapped(*args, **kwargs):
+        print 'start', args[0].__class__.__name__ 
+        res = old_wrapped(*args, **kwargs)
+        print 'end', args[0].__class__.__name__
+        return res
+    return new_wrapped
+web.authenticated = debug_auth
+
 #-----------------------------------------------------------------------------
 # Monkeypatch for Tornado <= 2.1.1 - Remove when no longer necessary!
 #-----------------------------------------------------------------------------
@@ -111,8 +123,13 @@ def authenticate_unless_readonly(f, self, *args, **kwargs):
     def auth_f(self, *args, **kwargs):
         return f(self, *args, **kwargs)
 
-    if self.application.read_only:
+    def _wrap():
+        print '_wrap'
         return f(self, *args, **kwargs)
+
+
+    if self.application.read_only:
+        return _wrap()
     else:
         return auth_f(self, *args, **kwargs)
 
@@ -687,6 +704,29 @@ class AllNotebookRootHandler(AuthenticatedHandler):
             f['kernel_id'] = km.kernel_for_notebook(f['notebook_id'])
             backend = nbm.backend_by_notebook_id(f['notebook_id'])
             f['project_path'] = backend.path
+
+        backends = []
+        for backend in nbm.notebook_projects:
+            b = {'name': backend.name, 'path': backend.path}
+            backends.append(b)
+
+        data = {'files': files, 'projects': backends}
+        self.finish(jsonapi.dumps(data))
+
+class ActiveNotebooksHandler(AuthenticatedHandler):
+
+    @authenticate_unless_readonly
+    def get(self):
+        nbm = self.application.notebook_manager
+        km = self.application.kernel_manager
+        files = nbm.all_notebooks()
+        for f in files :
+            f['kernel_id'] = km.kernel_for_notebook(f['notebook_id'])
+            backend = nbm.backend_by_notebook_id(f['notebook_id'])
+            f['project_path'] = backend.path
+        
+        # active kernels
+        files = [f for f in files if f['kernel_id'] is not None]
 
         backends = []
         for backend in nbm.notebook_projects:

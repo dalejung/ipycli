@@ -50,7 +50,9 @@ from .handlers import (LoginHandler, LogoutHandler,
     RSTHandler, AuthenticatedFileHandler, PrintNotebookHandler,
     MainClusterHandler, ClusterProfileHandler, ClusterActionHandler,
     PathedNotebookHandler, AddNotebookDirHandler, RenameNotebookHandler,
-    AutosaveNotebookHandler, NotebookTagHandler, AllNotebookRootHandler
+    AutosaveNotebookHandler, NotebookTagHandler, AllNotebookRootHandler,
+    ActiveNotebooksHandler
+                       
 )
 from .notebookmanager import NotebookManager
 from .clustermanager import ClusterManager
@@ -138,6 +140,7 @@ class NotebookWebApplication(web.Application):
             (r"/kernels/%s/shell" % _kernel_id_regex, ShellHandler),
             (r"/notebooks", NotebookRootHandler),
             (r"/all_notebooks", AllNotebookRootHandler),
+            (r"/active_notebooks", ActiveNotebooksHandler),
             (r"/tag/(.*)", NotebookTagHandler),
             (r"/notebooks/%s" % _notebook_id_regex, NotebookHandler),
             (r"/autosave/%s/(?P<client_id>.*)" % _notebook_id_regex, AutosaveNotebookHandler),
