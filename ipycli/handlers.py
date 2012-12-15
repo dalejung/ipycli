@@ -273,7 +273,7 @@ class LogoutHandler(AuthenticatedHandler):
 class NewHandler(AuthenticatedHandler):
 
     @web.authenticated
-    def get(self, path=None):
+    def get(self, path=None, public=False):
         nbm = self.application.notebook_manager
         project = nbm.notebook_dir
 
@@ -282,7 +282,7 @@ class NewHandler(AuthenticatedHandler):
         if path:
             raise Exception("Need to make a pathed_file handler")
             ndir, name = os.path.split(path)
-        notebook_id = nbm.new_notebook(backend=backend, name=name)
+        notebook_id = nbm.new_notebook(backend=backend, name=name, public=public)
         self.render(
             'notebook.html', project=project,
             notebook_id=notebook_id,
@@ -301,9 +301,11 @@ class NewHandler(AuthenticatedHandler):
         nbm = self.application.notebook_manager
 
         project_path = self.get_argument('project_path', default=None)
+        public = self.get_argument('public', default=False)
+        public = bool(public)
         backend = nbm.backend_by_path(project_path)
         name = None
-        notebook_id = nbm.new_notebook(backend=backend, name=name)
+        notebook_id = nbm.new_notebook(backend=backend, name=name, public=public)
         data = {'notebook_id':notebook_id}
         self.set_header('Location', '/'+notebook_id)
         self.finish(jsonapi.dumps(data))

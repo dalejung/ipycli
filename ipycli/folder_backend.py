@@ -60,7 +60,7 @@ class DirectoryProject(object):
         """Does a notebook exist?"""
         return os.path.isfile(path)
 
-    def new_notebook_object(self, path):
+    def new_notebook_object(self, path, public=False):
         return NBObject(self, path)
 
     def save_notebook_object(self, nb, path):

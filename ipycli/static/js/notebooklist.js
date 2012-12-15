@@ -222,7 +222,39 @@ var IPython = (function (IPython) {
                 $.ajax(url, settings);
             });
         new_but.button()
+
+        var new_pub_but = $('<button>New Public Notebook</button>').addClass('new-pub-notebook');
+        new_pub_but.button().click(function (e) {
+                content_type = 'application/json';
+
+                console.log($(this));
+                var par = $(this).parent().parent();
+                project_path = $(par).attr('project');
+                data = {'project_path':project_path};
+                // meh only difference
+                data['public'] = true
+                var settings = {
+                    cache : false,
+                    type : "POST",
+                    data : data,
+                };
+
+                var w = window.open('');
+                settings['success'] = function (data, status, xhr) {
+                    data = eval('['+data+']');
+                    data = data[0]
+                    notebook_id = data['notebook_id'];
+                    var href = window.location.href.split('#')[0]
+                    var url = href + notebook_id;
+                    w.location = url;
+                };
+
+                var url = $('body').data('baseProjectUrl') +'new';
+                $.ajax(url, settings);
+            });
+        new_pub_but.button()
         item_name.append(new_but);
+        item_name.append(new_pub_but);
         item.append(item_name);
 
         var project_list = this.element     

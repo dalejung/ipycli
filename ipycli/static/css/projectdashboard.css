@@ -90,8 +90,13 @@
 .project_name {
   position:relative;
 }
-.project_name .new-notebook {
+.project_name .new-pub-notebook {
   position:absolute;
   right: 0px;
+  top: 0px;
+}
+.project_name .new-notebook {
+  position:absolute;
+  right: 126px;
   top: 0px;
 }

@@ -527,13 +527,13 @@ class NotebookManager(LoggingConfigurable):
         nb = current.new_notebook(metadata=metadata)
         return nb 
 
-    def new_notebook(self, backend, name=None):
+    def new_notebook(self, backend, name=None, public=False):
         """Create a new notebook and return its notebook_id."""
         if name is None:
             # create new file with default naming
             path, name = backend.increment_filename('Untitled')
             nb = self.new_notebook_object(name)
-            nbo = backend.new_notebook_object(path)
+            nbo = backend.new_notebook_object(path, public=public)
             backend.save_notebook_object(nb, path=path)
             notebook_id = self.new_notebook_id(nbo, backend=backend)
         else:

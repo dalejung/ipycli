@@ -296,13 +296,13 @@ class TaggedGistProject(GistProject):
         self.save_notebook_object(nb, path=path)
         print 'autosave notebook {0}'.format(path)
 
-    def new_notebook_object(self, path):
+    def new_notebook_object(self, path, public=False):
         # we create gist here because we are using gist.html_url as path
         # this creates a redundancy with save_notebook_object
         _, tag, filename = path.split('/')
         files = new_notebook_files(filename)
         desc = "IPython Notebook #notebook {0}".format(tag)
-        gist = self.hub.get_user().create_gist(False, files, desc)
+        gist = self.hub.get_user().create_gist(public, files, desc)
         self.gists[gist.id] = gist
         self.path_mapping[path] = gist
 
