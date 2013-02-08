@@ -42,7 +42,7 @@ from tornado import httpserver
 from tornado import web
 
 # Our own libraries
-from .kernelmanager import MappingKernelManager
+from IPython.frontend.html.notebook.kernelmanager import MappingKernelManager
 from .handlers import (LoginHandler, LogoutHandler,
     ProjectDashboardHandler, NewHandler, NamedNotebookHandler,
     MainKernelHandler, KernelHandler, KernelActionHandler, IOPubHandler,
@@ -55,7 +55,7 @@ from .handlers import (LoginHandler, LogoutHandler,
                        
 )
 from .notebookmanager import NotebookManager
-from .clustermanager import ClusterManager
+from IPython.frontend.html.notebook.clustermanager import ClusterManager
 
 from IPython.config.application import catch_config_error, boolean_flag
 from IPython.core.application import BaseIPythonApplication
