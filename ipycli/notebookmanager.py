@@ -212,8 +212,8 @@ class NotebookManager(LoggingConfigurable):
         all_notebooks = [notebook for notebook in all_notebooks if '#inactive' not in notebook.tags]
         transients = [notebook for notebook in transients if '#inactive' not in notebook.tags]
 
-        # show the last 5 transients
-        all_notebooks = transients[-5:] + all_notebooks
+        # show the last 5 transients. Most recent on top
+        all_notebooks = list(reversed(transients[-5:])) + all_notebooks
 
         return self.output_notebooks(all_notebooks)
 
