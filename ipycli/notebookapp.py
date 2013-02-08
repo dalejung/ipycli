@@ -61,12 +61,12 @@ from IPython.config.application import catch_config_error, boolean_flag
 from IPython.core.application import BaseIPythonApplication
 from IPython.core.profiledir import ProfileDir
 from IPython.frontend.consoleapp import IPythonConsoleApp
-from IPython.lib.kernel import swallow_argv
+from IPython.kernel import swallow_argv
 from IPython.kernel.zmq.session import Session, default_secure
 from IPython.kernel.zmq.zmqshell import ZMQInteractiveShell
-from IPython.kernel.zmq.ipkernel import (
-    flags as ipkernel_flags,
-    aliases as ipkernel_aliases,
+from IPython.kernel.zmq.kernelapp import (
+    kernel_flags as ipkernel_flags,
+    kernel_aliases as ipkernel_aliases,
     IPKernelApp
 )
 from IPython.utils.traitlets import Dict, Unicode, Integer, List, Enum, Bool
