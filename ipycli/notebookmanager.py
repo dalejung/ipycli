@@ -69,34 +69,6 @@ def unique_everseen(iterable, key=None):
 #-----------------------------------------------------------------------------
 # Classes
 #-----------------------------------------------------------------------------
-
-class NotebookListPersister(object):
-    """
-        Simple persister
-    """
-    def __init__(self):
-        self.old_persist = None
-
-    def check(self, ndirs, pathed):
-        if (ndirs, pathed) == self.old_persist:
-            return
-        self.save(ndirs, pathed)
-        self.old_persist = (ndirs[:], pathed[:])
-
-    def save(self, ndirs, pathed):
-        data = (ndirs, pathed)
-        with open('notebook_list.db', 'w') as f:
-            pickle.dump(data, f)
-
-    def load(self):
-        try:
-            with open('notebook_list.db') as f:
-                data = pickle.load(f)
-                return data
-        except:
-            return False
-
-
 class NotebookManager(LoggingConfigurable):
 
     notebook_dir = Unicode(os.getcwdu(), config=True, help="""
@@ -146,22 +118,10 @@ class NotebookManager(LoggingConfigurable):
         self.notebook_dirs = []
         self.gist_projects = []
         self.add_notebook_dir(self.notebook_dir)
-        self.persister = NotebookListPersister()
-        self.load_notebooks()
 
     def add_notebook_dir(self, dir):
         project = DirectoryProject(dir, self.filename_ext)
         self.notebook_dirs.append(project)
-
-    def load_notebooks(self):
-        return None
-        data = self.persister.load()
-        if not data:
-            return
-        self.notebook_dirs = data[0]
-        pathed_notebooks = data[1]
-        for path in pathed_notebooks:
-            self.get_pathed_notebook(path)
 
     @property
     def notebook_projects(self):
@@ -203,8 +163,6 @@ class NotebookManager(LoggingConfigurable):
 
         pathed_notebooks = self.pathed_notebook_list()
 
-        self.persister.check(self.notebook_dirs, pathed_notebooks)
-
 
         all_notebooks = itertools.chain(notebooks, pathed_notebooks)
         all_notebooks = sorted(all_notebooks, key=lambda nb: nb.name)
@@ -231,8 +189,6 @@ class NotebookManager(LoggingConfigurable):
         notebooks = itertools.chain(*notebooks)
 
         pathed_notebooks = self.pathed_notebook_list()
-
-        self.persister.check(self.notebook_dirs, pathed_notebooks)
 
         all_notebooks = itertools.chain(notebooks, pathed_notebooks)
         all_notebooks = sorted(all_notebooks, key=lambda nb: nb.name)
