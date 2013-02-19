@@ -55,6 +55,21 @@ I tried to strike a good balance between autosaving and IPython shell response. 
 
 One is for public GISTs and the other is for private. 
 
+*What is nb?*
+
+``nb`` is a script that allows you to attach an ipython session to a running Notebook Kernel. ``nb list`` will print a numbered list of kernels. ``nb attach X`` will start and attach an ipython session.
+
+::
+
+  %nb list
+  Active Kernels:====================
+  [0] This is another tag   4983012: 7f5ba2cc-8060-4c8a-a746-8250e3ad6cd1
+
+*My nb isn't working. What the funk?*
+
+Edit the nb to make sure the IP and PORT are correct.
+
+
 SCREENSHOT
 ==========
 
