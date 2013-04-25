@@ -346,5 +346,5 @@ class GistHub(object):
         return gprojects
 
 def gist_hub(user, password):
-    g = github.Github(user, password)
+    g = github.Github(user, password, user_agent="ipycli")
     return GistHub(g)
