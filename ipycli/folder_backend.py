@@ -39,6 +39,10 @@ class DirectoryProject(object):
             return self.dir == other
         if isinstance(other, DirectoryProject):
             return self.dir == self.dir
+
+    def __repr__(self):
+        cn = self.__class__.__name__
+        return "{0}: {1}/*{2}".format(cn, self.dir, self.filename_ext)
     
     def get_notebook_object(self, path):
         if not os.path.isfile(path):
