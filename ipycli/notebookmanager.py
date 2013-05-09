@@ -441,11 +441,15 @@ class NotebookManager(LoggingConfigurable):
         if hasattr(backend, 'rename_notebook'):
             return backend.rename_notebook(nb, old_path)
 
+        # This is where the folder stuff lives
+        # it's not under Folder.rename_notebook because
+        # it interacts so much with NB Manager
+        # Gist on other hand has a stable ID and not a path that 
+        # can change
         name = nb.metadata.name + self.filename_ext
+        new_path = os.path.join(backend.dir, name)
 
-
-        # TODO should this be done elsehwere?
-        nbo.path = name
+        nbo.path = new_path
 
         self.set_notebook_path(notebook_id, nbo)
 
