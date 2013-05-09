@@ -191,7 +191,12 @@ var IPython = (function (IPython) {
         item.attr('project', project['path']);
         var item_name = $('<div/>').addClass('project_name');
         var h2 = $('<h2/>');
-        h2.html(project['name']);
+        var display_name = project['name']
+        var bits = display_name.split('/')
+        if (bits.length > 3) {
+          display_name = bits.slice(-2).join('/')
+        }
+        h2.html(display_name);
         item_name.append(h2);
 
         var new_but = $('<button>New Notebook</button>').addClass('new-notebook');
