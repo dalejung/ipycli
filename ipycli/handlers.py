@@ -355,6 +355,8 @@ class PathedNotebookHandler(AuthenticatedHandler):
 
     @authenticate_unless_readonly
     def get(self, notebook_path):
+        # haven't built a pathednotebook backend. 
+        return
         nbm = self.application.notebook_manager
         project = nbm.notebook_dir
         notebook_id = nbm.get_pathed_notebook(notebook_path)
