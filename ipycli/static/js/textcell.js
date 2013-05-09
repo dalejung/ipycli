@@ -11,9 +11,11 @@
 
 var IPython = (function (IPython) {
 
+    var utils = IPython.utils;
     // TextCell base class
 
-    var TextCell = function (notebook) {
+    var TextCell = function (notebook, kernel) {
+        this.kernel = kernel || null;
         this.code_mirror_mode = this.code_mirror_mode || 'htmlmixed';
         IPython.Cell.apply(this, arguments);
         this.rendered = false;
@@ -185,6 +187,57 @@ var IPython = (function (IPython) {
         return data;
     };
 
+    // Kernel related calls.
+
+    TextCell.prototype.set_kernel = function (kernel) {
+        this.kernel = kernel;
+    }
+
+    TextCell.prototype.execute = function () {
+        this.element.addClass("running");
+        var callbacks = {
+            'execute_reply': $.proxy(this._handle_execute_reply, this),
+            'output': $.proxy(this.handle_output, this),
+            //'clear_output': $.proxy(this.output_area.handle_clear_output, this.output_area),
+            //'set_next_input': $.proxy(this._handle_set_next_input, this)
+        };
+        var msg_id = this.kernel.execute(this.get_code(), callbacks, {silent: false});
+    };
+
+    TextCell.prototype.convert_mime_types = IPython.OutputArea.prototype.convert_mime_types
+
+    TextCell.prototype.handle_output = function (msg_type, content) {
+        var json = {};
+        json.output_type = msg_type;
+        if (msg_type === "stream") {
+            json.text = content.data;
+            json.stream = content.name;
+        } else if (msg_type === "display_data") {
+            json = this.convert_mime_types(json, content.data);
+        } else if (msg_type === "pyout") {
+            json.prompt_number = content.execution_count;
+            json = this.convert_mime_types(json, content.data);
+        } else if (msg_type === "pyerr") {
+            json.ename = content.ename;
+            json.evalue = content.evalue;
+            json.traceback = content.traceback;
+        };
+        // set the rendered
+        if (json.output_type == 'pyout') {
+          text = json.text
+          text = eval(text)
+          var html = IPython.markdown_converter.makeHtml(text);
+          this.set_rendered(html);
+          this.typeset()
+        }
+    };
+
+    TextCell.prototype.get_code = function () {
+      var cell = this;
+      var code = cell.get_text();
+      code = '"""'+code+'""".format(**locals())'
+      return code
+    };
 
     // HTMLCell
 

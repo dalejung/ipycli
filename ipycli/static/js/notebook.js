@@ -572,9 +572,9 @@ var IPython = (function (IPython) {
                 cell = new IPython.CodeCell(this.kernel, this);
                 cell.set_input_prompt();
             } else if (type === 'markdown') {
-                cell = new IPython.MarkdownCell(this);
+                cell = new IPython.MarkdownCell(this, this.kernel);
             } else if (type === 'html') {
-                cell = new IPython.HTMLCell(this);
+                cell = new IPython.HTMLCell(this, this.kernel);
             } else if (type === 'raw') {
                 cell = new IPython.RawCell(this);
             } else if (type === 'heading') {
@@ -606,9 +606,9 @@ var IPython = (function (IPython) {
                 cell = new IPython.CodeCell(this.kernel, this);
                 cell.set_input_prompt();
             } else if (type === 'markdown') {
-                cell = new IPython.MarkdownCell(this);
+                cell = new IPython.MarkdownCell(this, this.kernel);
             } else if (type === 'html') {
-                cell = new IPython.HTMLCell(this);
+                cell = new IPython.HTMLCell(this, this.kernel);
             } else if (type === 'raw') {
                 cell = new IPython.RawCell(this);
             } else if (type === 'heading') {
@@ -998,7 +998,7 @@ var IPython = (function (IPython) {
         var ncells = this.ncells();
         for (var i=0; i<ncells; i++) {
             var cell = this.get_cell(i);
-            if (cell instanceof IPython.CodeCell) {
+            if (cell instanceof IPython.CodeCell || cell instanceof IPython.TextCell) {
                 cell.set_kernel(this.kernel)
             };
         };
@@ -1032,8 +1032,8 @@ var IPython = (function (IPython) {
         var that = this;
         if (cell instanceof IPython.CodeCell) {
             cell.execute();
-        } else if (cell instanceof IPython.HTMLCell) {
-            cell.render();
+        } else if (cell instanceof IPython.TextCell) {
+            cell.execute();
         }
     },
 
