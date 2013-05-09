@@ -83,11 +83,11 @@ class DirectoryProject(object):
                 raise web.HTTPError(400, u'Unexpected error while saving notebook as script: %s' % e)
 
     def autosave_notebook(self, nb, nbo, client_id):
-        old_path = nbo.path 
-        ndir, filename = os.path.split(old_path)
-        filename = '.' + filename + '.' + client_id + ".save"
-        path = os.path.join(ndir, filename)
-        self.save_notebook_object(nb, path=path)
+        #old_path = nbo.path 
+        #ndir, filename = os.path.split(old_path)
+        #filename = '.' + filename + '.' + client_id + ".save"
+        #path = os.path.join(ndir, filename)
+        self.save_notebook_object(nb, path=nbo.path)
 
     def delete_notebook(self, path):
         if not os.path.isfile(path):
@@ -102,10 +102,15 @@ class DirectoryProject(object):
         until is find one that is not already being used. It is used to
         create Untitled and Copy names that are unique.
         """
+        # normalize to name without file ext
+        basename = basename.replace(self.filename_ext, '')
         ndir = self.dir
         i = 0
         while True:
-            name = u'%s%i' % (basename,i)
+            if i == 0:
+                name = basename
+            else:
+                name = u'%s%i' % (basename,i)
             name = name + self.filename_ext
             path = os.path.join(ndir, name)
             if not os.path.isfile(path):

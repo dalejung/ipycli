@@ -122,6 +122,7 @@ class NotebookManager(LoggingConfigurable):
     def add_notebook_dir(self, dir):
         project = DirectoryProject(dir, self.filename_ext)
         self.notebook_dirs.append(project)
+        return project
 
     @property
     def notebook_projects(self):
@@ -492,17 +493,13 @@ class NotebookManager(LoggingConfigurable):
         if name is None:
             # create new file with default naming
             path, name = backend.increment_filename('Untitled')
-            nb = self.new_notebook_object(name)
-            nbo = backend.new_notebook_object(path, public=public)
-            backend.save_notebook_object(nb, path=path)
-            notebook_id = self.new_notebook_id(nbo, backend=backend)
         else:
-            raise Exception("Another spot to add pathed backend")
-            # technically this is a pathed notebook
-            # I actually don't like this
-            notebook_id = self.new_notebook_id(name, ndir=ndir)
-            path = os.path.join(ndir, name)
-            self.pathed_notebooks[notebook_id] = path
+            path, name = backend.increment_filename(name)
+
+        nb = self.new_notebook_object(name)
+        nbo = backend.new_notebook_object(path, public=public)
+        backend.save_notebook_object(nb, path=path)
+        notebook_id = self.new_notebook_id(nbo, backend=backend)
 
         return notebook_id
 

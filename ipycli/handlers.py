@@ -274,14 +274,31 @@ class NewHandler(AuthenticatedHandler):
 
     @web.authenticated
     def get(self, path=None, public=False):
+        """
+        The GET works with FolderBackend
+        Used for nb commandline tool
+        """
         nbm = self.application.notebook_manager
         project = nbm.notebook_dir
 
-        backend = nbm.notebook_dirs[0]
         name = None
+        backend = None
+
+        # for now, pathed_notebooks will just enable a folder project
         if path:
-            raise Exception("Need to make a pathed_file handler")
             ndir, name = os.path.split(path)
+            # see if notebook exists
+            for be in nbm.notebook_dirs:
+                if ndir == be.path:
+                    backend = be
+                    break
+            if backend is None:
+                backend = nbm.add_notebook_dir(ndir)
+
+        # default to defaultdir
+        if backend is None:
+            backend = nbm.notebook_dirs[0] 
+
         notebook_id = nbm.new_notebook(backend=backend, name=name, public=public)
         self.render(
             'notebook.html', project=project,
