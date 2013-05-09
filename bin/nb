@@ -95,7 +95,7 @@ if __name__ == '__main__':
     import os
     parser = argparse.ArgumentParser(description="Start a notebook");
 
-    parser.add_argument('action', nargs="?", action="store", default="list")
+    parser.add_argument('action', nargs="?", action="store", default=None)
     parser.add_argument('target', nargs="?", action="store")
 
     args = parser.parse_args()
@@ -103,6 +103,13 @@ if __name__ == '__main__':
     target = args.target
     action = args.action
     cwd = os.getcwd()
+
+    if not action and not target:
+        action = 'list'
+
+    if not target and action != 'list':
+        target = action
+        action = 'notebook'
 
     if action in ['add-dir', 'notebook']:
         add_notebooks(action, target, cwd)
