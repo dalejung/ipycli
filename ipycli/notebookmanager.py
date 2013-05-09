@@ -120,6 +120,7 @@ class NotebookManager(LoggingConfigurable):
         self.add_notebook_dir(self.notebook_dir)
 
     def add_notebook_dir(self, dir):
+        dir = os.path.abspath(dir)
         project = DirectoryProject(dir, self.filename_ext)
         self.notebook_dirs.append(project)
         return project
@@ -140,6 +141,19 @@ class NotebookManager(LoggingConfigurable):
             if not hasattr(backend, 'tag'):
                 continue
             if backend.tag == tag:
+                notebooks = backend.notebooks()
+
+        return self.output_notebooks(notebooks, sort=False)
+
+    def dir_notebooks(self, dir):
+        """
+            List all notebooks in a dict
+        """
+        self.refresh_notebooks(skip_github=True)
+
+        notebooks = []
+        for backend in self.notebook_dirs:
+            if backend.path == dir:
                 notebooks = backend.notebooks()
 
         return self.output_notebooks(notebooks, sort=False)
@@ -207,9 +221,9 @@ class NotebookManager(LoggingConfigurable):
 
         return data
 
-    def refresh_notebooks(self):
+    def refresh_notebooks(self, skip_github=False):
         # HACK
-        if self.ghub:
+        if self.ghub and not skip_github:
             projects = self.ghub.get_gist_projects()
             self.gist_projects = projects
         # ENDHACK

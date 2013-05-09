@@ -16,6 +16,10 @@ $(document).ready(function () {
 
     $('div#tabs').tabs();
     $('div#tabs').on('tabsselect', function (event, ui) {
+        var nblist = $(ui.panel).data('nblist');
+        if (nblist) {
+            nblist.load_list()
+        }
         var new_url = $('body').data('baseProjectUrl') + '#' + ui.panel.id;
         window.history.replaceState({}, '', new_url);
     });
@@ -26,7 +30,13 @@ $(document).ready(function () {
     });
 
     IPython.read_only = $('body').data('readOnly') === 'True';
-    IPython.notebook_list = new IPython.NotebookList('div#notebook_list');
+    IPython.base_project = $('body').data('project');
+    var root = window.location.pathname.split('/')[1]
+    if (root == 'ndir') {
+      IPython.notebook_list = new IPython.NotebookList('div#notebook_list', 'dir', IPython.base_project);
+    } else {
+      IPython.notebook_list = new IPython.NotebookList('div#notebook_list');
+    }
     IPython.cluster_list = new IPython.ClusterList('div#cluster_list');
     IPython.transient_notebook_list = new IPython.NotebookList('div#transient-notebook_list', 'tag', 'transient');
     IPython.showall_notebook_list = new IPython.NotebookList('div#showall-notebook_list', 'tag', 'showall');
@@ -42,8 +52,8 @@ $(document).ready(function () {
         if($('.upload_button').length == 0)
         {
             IPython.notebook_list.load_list();
-            IPython.transient_notebook_list.load_list();
-            IPython.showall_notebook_list.load_list();
+            //IPython.transient_notebook_list.load_list();
+            //IPython.showall_notebook_list.load_list();
             IPython.cluster_list.load_list();
         }
         if (!interval_id){
@@ -51,8 +61,8 @@ $(document).ready(function () {
                     if($('.upload_button').length == 0)
                     {
                         IPython.notebook_list.load_list();
-                        IPython.transient_notebook_list.load_list();
-                        IPython.showall_notebook_list.load_list();
+                        //IPython.transient_notebook_list.load_list();
+                        //IPython.showall_notebook_list.load_list();
                         IPython.cluster_list.load_list();
                     }
                 }, time_refresh*1000);

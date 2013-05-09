@@ -48,6 +48,8 @@ var IPython = (function (IPython) {
             that.handelFilesUpload(event,'drop');
             return false;
         });
+        console.log(this.element)
+        this.element.parent().data('nblist', that)
     };
 
     NotebookList.prototype.handelFilesUpload =  function(event, dropOrForm) {
@@ -103,6 +105,9 @@ var IPython = (function (IPython) {
             // meh
             url = $('body').data('baseProjectUrl') + 'all_notebooks';
           }
+        }
+        if (this.type == 'dir') {
+          url = $('body').data('baseProjectUrl') + 'dir_notebooks/' + this.key;
         }
         $.ajax(url, settings);
     };

@@ -51,7 +51,7 @@ from .handlers import (LoginHandler, LogoutHandler,
     MainClusterHandler, ClusterProfileHandler, ClusterActionHandler,
     PathedNotebookHandler, AddNotebookDirHandler, RenameNotebookHandler,
     AutosaveNotebookHandler, NotebookTagHandler, AllNotebookRootHandler,
-    ActiveNotebooksHandler
+    ActiveNotebooksHandler, NotebookDirHandler 
                        
 )
 from .notebookmanager import NotebookManager
@@ -142,6 +142,7 @@ class NotebookWebApplication(web.Application):
             (r"/all_notebooks", AllNotebookRootHandler),
             (r"/active_notebooks", ActiveNotebooksHandler),
             (r"/tag/(.*)", NotebookTagHandler),
+            (r"/dir_notebooks/(.*)", NotebookDirHandler),
             (r"/notebooks/%s" % _notebook_id_regex, NotebookHandler),
             (r"/autosave/%s/(?P<client_id>.*)" % _notebook_id_regex, AutosaveNotebookHandler),
             (r"/rename/%s" % _notebook_id_regex, RenameNotebookHandler),
@@ -153,6 +154,7 @@ class NotebookWebApplication(web.Application):
 
             (r"/n/(.*)", PathedNotebookHandler),
             (r"/add_dir/(.*)", AddNotebookDirHandler),
+            (r"/ndir/(.*)", ProjectDashboardHandler),
         ]
         settings = dict(
             template_path=os.path.join(os.path.dirname(__file__), "templates"),

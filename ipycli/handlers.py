@@ -209,9 +209,10 @@ class AuthenticatedFileHandler(AuthenticatedHandler, web.StaticFileHandler):
 class ProjectDashboardHandler(AuthenticatedHandler):
 
     @authenticate_unless_readonly
-    def get(self):
+    def get(self, project=None):
         nbm = self.application.notebook_manager
-        project = nbm.notebook_dir
+        if project is None:
+            project = nbm.notebook_dir
         self.render(
             'projectdashboard.html', project=project,
             base_project_url=self.application.ipython_app.base_project_url,
@@ -779,6 +780,27 @@ class NotebookTagHandler(AuthenticatedHandler):
         data = {'files': files, 'projects': backends}
         self.finish(jsonapi.dumps(data))
 
+class NotebookDirHandler(AuthenticatedHandler):
+
+    @authenticate_unless_readonly
+    def get(self, tag):
+        nbm = self.application.notebook_manager
+        km = self.application.kernel_manager
+        files = nbm.dir_notebooks(tag)
+
+        backend = None
+        for f in files :
+            f['kernel_id'] = km.kernel_for_notebook(f['notebook_id'])
+            backend = nbm.backend_by_notebook_id(f['notebook_id'])
+            f['project_path'] = backend.path
+
+        # all these should be from the same backend, for now
+        backends = []
+        b = {'name': backend.path, 'path': backend.path}
+        backends.append(b)
+
+        data = {'files': files, 'projects': backends}
+        self.finish(jsonapi.dumps(data))
 
 class NotebookHandler(AuthenticatedHandler):
 
