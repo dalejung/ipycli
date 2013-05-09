@@ -11,9 +11,10 @@
 
 var IPython = (function (IPython) {
 
-    var NotebookList = function (selector, tag) {
+    var NotebookList = function (selector, type, key) {
         this.selector = selector;
-        this.tag = tag;
+        this.type = type
+        this.key = key;
         if (this.selector !== undefined) {
             this.element = $(selector);
             this.style();
@@ -96,9 +97,9 @@ var IPython = (function (IPython) {
             success : $.proxy(this.list_loaded, this)
         };
         var url = $('body').data('baseProjectUrl') + 'notebooks';
-        if (this.tag) {
-          url = $('body').data('baseProjectUrl') + 'tag/' + this.tag;
-          if (this.tag == 'showall') {
+        if (this.type == 'tag') {
+          url = $('body').data('baseProjectUrl') + 'tag/' + this.key;
+          if (this.key == 'showall') {
             // meh
             url = $('body').data('baseProjectUrl') + 'all_notebooks';
           }
