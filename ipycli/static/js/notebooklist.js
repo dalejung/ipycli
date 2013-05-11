@@ -202,7 +202,12 @@ var IPython = (function (IPython) {
         if (bits.length > 3) {
           display_name = bits.slice(-2).join('/')
         }
-        h2.html(display_name);
+        var href = '/ndir/'+project['path']
+          var link = $('<a/>').
+          attr('href', href).
+          attr('target','_blank').
+          text(display_name)
+        h2.append(link);
         item_name.append(h2);
 
         var new_but = $('<button>New Notebook</button>').addClass('new-notebook');
