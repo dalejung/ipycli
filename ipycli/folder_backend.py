@@ -107,7 +107,7 @@ class DirectoryProject(object):
         ndir = self.dir
         i = 0
         while True:
-            if i == 0:
+            if basename != 'Untitled' and i == 0:
                 name = basename
             else:
                 name = u'%s%i' % (basename,i)
