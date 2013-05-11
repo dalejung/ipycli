@@ -151,11 +151,13 @@ class NotebookManager(LoggingConfigurable):
         """
         self.refresh_notebooks(skip_github=True)
 
-        notebooks = []
+        backend_matches = []
         for backend in self.notebook_dirs:
-            if backend.path == dir:
-                notebooks = backend.notebooks()
+            # add all subdirs as well
+            if backend.path.startswith(dir):
+                backend_matches.append(backend)
 
+        notebooks = itertools.chain(*[backend.notebooks() for backend in backend_matches])
         return self.output_notebooks(notebooks, sort=False)
 
     def list_notebooks(self):

@@ -783,21 +783,21 @@ class NotebookTagHandler(AuthenticatedHandler):
 class NotebookDirHandler(AuthenticatedHandler):
 
     @authenticate_unless_readonly
-    def get(self, tag):
+    def get(self, dir):
         nbm = self.application.notebook_manager
         km = self.application.kernel_manager
-        files = nbm.dir_notebooks(tag)
+        files = nbm.dir_notebooks(dir)
 
+        used_projects = {}
         backend = None
         for f in files :
             f['kernel_id'] = km.kernel_for_notebook(f['notebook_id'])
             backend = nbm.backend_by_notebook_id(f['notebook_id'])
+            used_projects[backend] = backend
             f['project_path'] = backend.path
 
         # all these should be from the same backend, for now
-        backends = []
-        b = {'name': backend.path, 'path': backend.path}
-        backends.append(b)
+        backends = [{'name':backend.path, 'path': backend.path} for backend in used_projects]
 
         data = {'files': files, 'projects': backends}
         self.finish(jsonapi.dumps(data))
