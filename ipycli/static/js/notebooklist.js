@@ -224,8 +224,8 @@ var IPython = (function (IPython) {
                     data = eval('['+data+']');
                     data = data[0]
                     notebook_id = data['notebook_id'];
-                    var href = window.location.href.split('#')[0]
-                    var url = href + notebook_id;
+                    var  loc = window.location
+                    var url = loc.protocol + '//' + loc.hostname + ':' + loc.port + '/' + notebook_id;
                     w.location = url;
                 };
 
