@@ -584,8 +584,6 @@ class NotebookApp(BaseIPythonApplication):
             ghub = gist_hub(self.github_user, self.github_pw)
             # hack
             self.notebook_manager.ghub = ghub
-            projects = ghub.get_gist_projects()
-            self.notebook_manager.notebook_dirs.extend(projects)
 
         if self.open_browser or self.file_to_run:
             ip = self.ip or '127.0.0.1'

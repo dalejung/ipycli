@@ -115,19 +115,21 @@ class NotebookManager(LoggingConfigurable):
         super(NotebookManager, self).__init__(*args, **kwargs)
 
         self.ghub = None
-        self.notebook_dirs = []
+        self.notebook_dirs = {}
         self.gist_projects = []
         self.add_notebook_dir(self.notebook_dir)
 
     def add_notebook_dir(self, dir):
         dir = os.path.abspath(dir)
-        project = DirectoryProject(dir, self.filename_ext)
-        self.notebook_dirs.append(project)
+        project = self.notebook_dirs.get(dir, None)
+        if project is None:
+            project = DirectoryProject(dir, self.filename_ext)
+            self.notebook_dirs[dir] = project
         return project
 
     @property
     def notebook_projects(self):
-        return itertools.chain(self.notebook_dirs, self.gist_projects)
+        return itertools.chain(self.notebook_dirs.values(), self.gist_projects)
 
     def tagged_notebooks(self, tag):
         """
@@ -152,7 +154,7 @@ class NotebookManager(LoggingConfigurable):
         self.refresh_notebooks(skip_github=True)
 
         backend_matches = []
-        for backend in self.notebook_dirs:
+        for backend in self.notebook_dirs.values():
             # add all subdirs as well
             if backend.path.startswith(dir):
                 backend_matches.append(backend)
