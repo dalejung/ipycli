@@ -11,11 +11,15 @@ def call(cmd, path='', host=HOST, port=PORT):
     if DEBUG:
         url = "http://%s:%d/%s/%s" % (host, port, cmd, path)
         print url
-    path = urllib.quote_plus(path)
-    url = "http://%s:%d/%s/%s" % (host, port, cmd, path)
+    quoted_path = urllib.quote_plus(path)
+    url = "http://%s:%d/%s/%s" % (host, port, cmd, quoted_path)
     if url[-1] == '/':
         url = url[:-1]
-    return urllib2.urlopen(url)
+    try:
+        ret = urllib2.urlopen(url)
+        return ret
+    except:
+        print('nb failed: cmd={cmd}, path={path}'.format(cmd=cmd, path=path))
 
 def open_url(path, host=HOST, port=PORT):
     call('n', path, host, port)
