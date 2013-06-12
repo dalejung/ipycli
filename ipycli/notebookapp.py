@@ -40,9 +40,22 @@ ioloop.install()
 
 from tornado import httpserver
 from tornado import web
+from jinja2 import Environment, FileSystemLoader
 
 # Our own libraries
-from IPython.frontend.html.notebook.kernelmanager import MappingKernelManager
+from IPython.frontend.html.notebook.services.kernels.kernelmanager \
+        import MappingKernelManager
+
+import IPython.frontend.html.notebook.services.kernels.handlers \
+        as kern_handlers
+
+from IPython.frontend.html.notebook import DEFAULT_STATIC_FILES_PATH
+
+from IPython.utils.traitlets import (
+    Dict, Unicode, Integer, List, Bool, Bytes,
+    DottedObjectName
+)
+
 from .handlers import (LoginHandler, LogoutHandler,
     ProjectDashboardHandler, NewHandler, NamedNotebookHandler,
     MainKernelHandler, KernelHandler, KernelActionHandler, IOPubHandler,
@@ -52,8 +65,11 @@ from .handlers import (LoginHandler, LogoutHandler,
     PathedNotebookHandler, AddNotebookDirHandler, RenameNotebookHandler,
     AutosaveNotebookHandler, NotebookTagHandler, AllNotebookRootHandler,
     ActiveNotebooksHandler, NotebookDirHandler 
-                       
 )
+
+from IPython.frontend.html.notebook.base.handlers \
+        import FileFindHandler,AuthenticatedFileHandler
+
 from .notebookmanager import NotebookManager
 from IPython.frontend.html.notebook.clustermanager import ClusterManager
 
@@ -133,11 +149,12 @@ class NotebookWebApplication(web.Application):
             (r"/%s" % _notebook_id_regex, NamedNotebookHandler),
             (r"/%s/copy" % _notebook_id_regex, NotebookCopyHandler),
             (r"/%s/print" % _notebook_id_regex, PrintNotebookHandler),
-            (r"/kernels", MainKernelHandler),
-            (r"/kernels/%s" % _kernel_id_regex, KernelHandler),
-            (r"/kernels/%s/%s" % (_kernel_id_regex, _kernel_action_regex), KernelActionHandler),
-            (r"/kernels/%s/iopub" % _kernel_id_regex, IOPubHandler),
-            (r"/kernels/%s/shell" % _kernel_id_regex, ShellHandler),
+            (r"/kernels", kern_handlers.MainKernelHandler),
+            (r"/kernels/%s" % _kernel_id_regex, kern_handlers.KernelHandler),
+            (r"/kernels/%s/%s" % (_kernel_id_regex, _kernel_action_regex), kern_handlers.KernelActionHandler),
+            (r"/kernels/%s/iopub" % _kernel_id_regex, kern_handlers.IOPubHandler),
+            (r"/kernels/%s/shell" % _kernel_id_regex, kern_handlers.ShellHandler),
+            (r"/kernels/%s/stdin" % _kernel_id_regex, kern_handlers.StdinHandler),
             (r"/notebooks", NotebookRootHandler),
             (r"/all_notebooks", AllNotebookRootHandler),
             (r"/active_notebooks", ActiveNotebooksHandler),
@@ -156,15 +173,10 @@ class NotebookWebApplication(web.Application):
             (r"/add_dir/(.*)", AddNotebookDirHandler),
             (r"/ndir/(.*)", ProjectDashboardHandler),
         ]
-        settings = dict(
-            template_path=os.path.join(os.path.dirname(__file__), "templates"),
-            static_path=os.path.join(os.path.dirname(__file__), "static"),
-            cookie_secret=os.urandom(1024),
-            login_url="/login",
-        )
 
-        # allow custom overrides for the tornado web app.
-        settings.update(settings_overrides)
+        settings = self.init_settings(
+            ipython_app, kernel_manager, notebook_manager, cluster_manager,
+            log, base_project_url, settings_overrides)
 
         # Python < 2.6.5 doesn't accept unicode keys in f(**kwargs), and
         # base_project_url will always be unicode, which will in turn
@@ -191,6 +203,51 @@ class NotebookWebApplication(web.Application):
         self.ipython_app = ipython_app
         self.read_only = self.ipython_app.read_only
         self.log = log
+
+    def init_settings(self, ipython_app, kernel_manager, notebook_manager,
+                      cluster_manager, log,
+                      base_project_url, settings_overrides):
+        # Python < 2.6.5 doesn't accept unicode keys in f(**kwargs), and
+        # base_project_url will always be unicode, which will in turn
+        # make the patterns unicode, and ultimately result in unicode
+        # keys in kwargs to handler._execute(**kwargs) in tornado.
+        # This enforces that base_project_url be ascii in that situation.
+        # 
+        # Note that the URLs these patterns check against are escaped,
+        # and thus guaranteed to be ASCII: 'héllo' is really 'h%C3%A9llo'.
+        base_project_url = py3compat.unicode_to_str(base_project_url, 'ascii')
+        template_path = os.path.join(os.path.dirname(__file__), "templates")
+        static_path=os.path.join(os.path.dirname(__file__), "static")
+        settings = dict(
+            # basics
+            base_project_url=base_project_url,
+            base_kernel_url=ipython_app.base_kernel_url,
+            template_path=template_path,
+            static_path=static_path,
+            static_handler_class = FileFindHandler,
+            static_url_prefix = url_path_join(base_project_url,'/static/'),
+            
+            # authentication
+            cookie_secret=ipython_app.cookie_secret,
+            login_url=url_path_join(base_project_url,'/login'),
+            read_only=ipython_app.read_only,
+            password=ipython_app.password,
+            
+            # managers
+            kernel_manager=kernel_manager,
+            notebook_manager=notebook_manager,
+            cluster_manager=cluster_manager,
+            
+            # IPython stuff
+            mathjax_url=ipython_app.mathjax_url,
+            max_msg_size=ipython_app.max_msg_size,
+            config=ipython_app.config,
+            use_less=ipython_app.use_less,
+            jinja2_env=Environment(loader=FileSystemLoader(template_path)),
+        )
+        # allow custom overrides for the tornado web app.
+        settings.update(settings_overrides)
+        return settings
 
 
 #-----------------------------------------------------------------------------
@@ -334,6 +391,18 @@ class NotebookApp(BaseIPythonApplication):
                       """
     )
 
+    cookie_secret = Bytes(b'', config=True,
+        help="""The random bytes used to secure cookies.
+        By default this is a new random number every time you start the Notebook.
+        Set it to a value in a config file to enable logins to persist across server sessions.
+        
+        Note: Cookie secrets should be kept private, do not share config files with
+        cookie_secret stored in plaintext (you can read the value from a file).
+        """
+    )
+    def _cookie_secret_default(self):
+        return os.urandom(1024)
+
     open_browser = Bool(True, config=True,
                         help="""Whether to open in a browser after starting.
                         The specific browser used is platform dependent and
@@ -380,6 +449,37 @@ class NotebookApp(BaseIPythonApplication):
     websocket_host = Unicode("", config=True,
         help="""The hostname for the websocket server."""
     )
+
+    use_less = Bool(False, config=True,
+                       help="""Wether to use Browser Side less-css parsing
+                       instead of compiled css version in templates that allows
+                       it. This is mainly convenient when working on the less
+                       file to avoid a build step, or if user want to overwrite
+                       some of the less variables without having to recompile
+                       everything.
+                       
+                       You will need to install the less.js component in the static directory
+                       either in the source tree or in your profile folder.
+                       """)
+
+    max_msg_size = Integer(65536, config=True, help="""
+        The max raw message size accepted from the browser
+        over a WebSocket connection.
+    """)
+
+    extra_static_paths = List(Unicode, config=True,
+        help="""Extra paths to search for serving static files.
+        
+        This allows adding javascript/css to be available from the notebook server machine,
+        or overriding individual files in the IPython"""
+    )
+    def _extra_static_paths_default(self):
+        return [os.path.join(self.profile_dir.location, 'static')]
+    
+    @property
+    def static_file_path(self):
+        """return extra paths + the default location"""
+        return self.extra_static_paths + [DEFAULT_STATIC_FILES_PATH]
 
     mathjax_url = Unicode("", config=True,
         help="""The url for MathJax.js."""

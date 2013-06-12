@@ -81,7 +81,11 @@ var IPython = (function (IPython) {
         console.log("Kernel started: ", json.kernel_id);
         this.running = true;
         this.kernel_id = json.kernel_id;
-        this.ws_url = json.ws_url;
+        var ws_url = json.ws_url;
+        if (ws_url.match(/wss?:\/\//) == null) {
+            ws_url = "ws" + location.origin.substr(4) + ws_url;
+        };
+        this.ws_url = ws_url;
         this.kernel_url = this.base_url + "/" + this.kernel_id;
         this.start_channels();
         this.shell_channel.onmessage = $.proxy(this._handle_shell_reply,this);
@@ -125,11 +129,14 @@ var IPython = (function (IPython) {
         var that = this;
         this.stop_channels();
         var ws_url = this.ws_url + this.kernel_url;
-        console.log("Starting WS:", ws_url);
+        console.log("Starting WS:", ws_url, 'ws', this.ws_url, 'kn', this.kernel_url);
         this.shell_channel = new this.WebSocket(ws_url + "/shell");
+        this.stdin_channel = new this.WebSocket(ws_url + "/stdin");
         this.iopub_channel = new this.WebSocket(ws_url + "/iopub");
         send_cookie = function(){
-            this.send(document.cookie);
+            // send the session id so the Session object Python-side
+            // has the same identity
+            this.send(that.session_id + ':' + document.cookie);
         };
         var already_called_onclose = false; // only alert once
         ws_closed_early = function(evt){
