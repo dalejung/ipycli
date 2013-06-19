@@ -67,6 +67,8 @@ from .handlers import (LoginHandler, LogoutHandler,
     ActiveNotebooksHandler, NotebookDirHandler 
 )
 
+from .cell_func import CellFuncHandler
+
 from IPython.frontend.html.notebook.base.handlers \
         import FileFindHandler,AuthenticatedFileHandler
 
@@ -172,6 +174,8 @@ class NotebookWebApplication(web.Application):
             (r"/n/(.*)", PathedNotebookHandler),
             (r"/add_dir/(.*)", AddNotebookDirHandler),
             (r"/ndir/(.*)", ProjectDashboardHandler),
+
+            (r"/cell_func/(.*)/(.*)", CellFuncHandler),
         ]
 
         settings = self.init_settings(
