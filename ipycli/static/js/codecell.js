@@ -173,6 +173,11 @@ var IPython = (function (IPython) {
 
 
     CodeCell.prototype.execute = function () {
+        var code = this.get_code();
+        if(code.search('%cell_func') == 0) {
+            return this.cell_func()
+        }
+        console.log(code)
         this.output_area.clear_output(true, true, true);
         this.set_input_prompt('*');
         this.element.addClass("running");
@@ -182,7 +187,50 @@ var IPython = (function (IPython) {
             'clear_output': $.proxy(this.output_area.handle_clear_output, this.output_area),
             'set_next_input': $.proxy(this._handle_set_next_input, this)
         };
-        var msg_id = this.kernel.execute(this.get_code(), callbacks, {silent: false});
+        var msg_id = this.kernel.execute(code, callbacks, {silent: false});
+    };
+
+    CodeCell.prototype.cell_func = function () {
+        var settings = {
+            processData : false,
+            cache : false,
+            type : "GET",
+            dataType : "json",
+            success : $.proxy(this.run_cell_func,this),
+        };
+        var lines = this.get_code().split('\n');
+        var first_line = lines[0];
+        var bits = first_line.split(' ');
+        var func_name = bits[1];
+        var kernel_id = this.kernel.kernel_id;
+        var url = $('body').data('baseProjectUrl') + 'cell_func';
+        url = url + '/' + kernel_id;
+        url = url + '/' + func_name;
+        console.log(url);
+        $.ajax(url, settings);
+    };    
+
+    CodeCell.prototype.run_cell_func = function (data, status, xhr) {
+        data = '('+data+')';
+        data = eval(data);
+        var filepath = data['file'];
+        var source = data['source'];
+        var lines = this.get_code().split('\n');
+        var new_lines = [lines[0], '# '+filepath];
+        new_lines = new_lines.concat(source.split('\n').slice(1));
+        var new_body = new_lines.join('\n');
+        this.set_text(new_body);
+
+        this.output_area.clear_output(true, true, true);
+        this.set_input_prompt('*');
+        this.element.addClass("running");
+        var callbacks = {
+            'execute_reply': $.proxy(this._handle_execute_reply, this),
+            'output': $.proxy(this.output_area.handle_output, this.output_area),
+            'clear_output': $.proxy(this.output_area.handle_clear_output, this.output_area),
+            'set_next_input': $.proxy(this._handle_set_next_input, this)
+        };
+        var msg_id = this.kernel.execute(source, callbacks, {silent: false});
     };
 
 
