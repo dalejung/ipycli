@@ -48,7 +48,6 @@ var IPython = (function (IPython) {
             that.handelFilesUpload(event,'drop');
             return false;
         });
-        console.log(this.element)
         this.element.parent().data('nblist', that)
     };
 
@@ -198,10 +197,23 @@ var IPython = (function (IPython) {
         var item_name = $('<div/>').addClass('project_name');
         var h2 = $('<h2/>');
         var display_name = project['name']
-        var bits = display_name.split('/')
-        if (bits.length > 3) {
-          display_name = bits.slice(-2).join('/')
+        var base_project = $('body').data('project');
+        // I usually have subfolders with notebooks directories like
+        // /parent/child/notebooks
+        // /parent/child2/notebooks
+        //
+        // If we are in /parent I want to only show child/child2 in the project header
+        if (display_name != base_project && display_name.indexOf(base_project) == 0) {
+            display_name = display_name.slice(base_project.length+1);
         }
+        var bits = display_name.split('/')
+      if (bits[bits.length-1] == 'notebooks') {
+          bits.pop();
+      }
+        if (bits.length > 3) {
+          bits = bits.slice(-2)
+        }
+        display_name = bits.join('/');
         var href = '/ndir/'+project['path']
           var link = $('<a/>').
           attr('href', href).
@@ -214,7 +226,6 @@ var IPython = (function (IPython) {
         new_but.button().click(function (e) {
                 content_type = 'application/json';
 
-                console.log($(this));
                 var par = $(this).parent().parent();
                 project_path = $(par).attr('project');
                 data = {'project_path':project_path};
@@ -243,7 +254,6 @@ var IPython = (function (IPython) {
         new_pub_but.button().click(function (e) {
                 content_type = 'application/json';
 
-                console.log($(this));
                 var par = $(this).parent().parent();
                 project_path = $(par).attr('project');
                 data = {'project_path':project_path};
