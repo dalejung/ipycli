@@ -13,7 +13,8 @@ def get_source(func, func_name):
     """
     source = getsource(func, func_name)
     lines = source.split('\n')
-    lines = [line for line in lines if line]
+    if not lines[-1]:
+        lines = lines[:-1]
     assert lines[0].startswith('def ')
     body_lines = lines[1:]
     first_line = body_lines[0]
