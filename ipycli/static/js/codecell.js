@@ -177,7 +177,6 @@ var IPython = (function (IPython) {
         if(code.search('%cell_func') == 0) {
             return this.cell_func()
         }
-        console.log(code)
         this.output_area.clear_output(true, true, true);
         this.set_input_prompt('*');
         this.element.addClass("running");
@@ -191,6 +190,9 @@ var IPython = (function (IPython) {
     };
 
     CodeCell.prototype.cell_func = function () {
+        this.output_area.clear_output(true, true, true);
+        this.set_input_prompt('*');
+        this.element.addClass("running");
         var settings = {
             processData : false,
             cache : false,
@@ -206,7 +208,6 @@ var IPython = (function (IPython) {
         var url = $('body').data('baseProjectUrl') + 'cell_func';
         url = url + '/' + kernel_id;
         url = url + '/' + func_name;
-        console.log(url);
         $.ajax(url, settings);
     };    
 
@@ -217,13 +218,10 @@ var IPython = (function (IPython) {
         var source = data['source'];
         var lines = this.get_code().split('\n');
         var new_lines = [lines[0], '# '+filepath];
-        new_lines = new_lines.concat(source.split('\n').slice(1));
+        new_lines = new_lines.concat(source.split('\n'));
         var new_body = new_lines.join('\n');
         this.set_text(new_body);
 
-        this.output_area.clear_output(true, true, true);
-        this.set_input_prompt('*');
-        this.element.addClass("running");
         var callbacks = {
             'execute_reply': $.proxy(this._handle_execute_reply, this),
             'output': $.proxy(this.output_area.handle_output, this.output_area),
