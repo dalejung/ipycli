@@ -1,5 +1,6 @@
 import inspect
 import linecache
+from functools import partial
 import io
 import re
 from Queue import Empty
@@ -10,20 +11,53 @@ import time
 def get_source(func, func_name):
     """
     Grab the source of a function while un-indenting the first level
+
+    Note:
+        keyword arguments for the function will be placed into source
+        body as assignments. This is so we can define defaults
+
+        def fake_func(d=123, kw2=3):
+            kw1 = 'dale'
+            kw2 = 11
+
+        generates the following source. Essentially keyword header + code
+
+        # keywords
+        kw2 = 3
+        d = 123
+
+        kw1 = 'dale'
+        kw2 = 11
     """
-    source = getsource(func, func_name)
+    base_func = func
+    if isinstance(func, partial):
+        base_func = func.func
+
+    source = getsource(base_func, func_name)
+    file = inspect.getsourcefile(base_func)
+    keywords = get_callable_keywords(func)
+
     lines = source.split('\n')
+    # get rid of empty last line
     if not lines[-1]:
         lines = lines[:-1]
     assert lines[0].startswith('def ')
-    body_lines = lines[1:]
-    first_line = body_lines[0]
+
+    # unindent the code lines
+    code_lines = _unindent_lines(lines[1:])
+    keyword_lines = ["{k} = {v}".format(k=k, v=repr(v)) for k, v in keywords.items()]
+    if keyword_lines:
+        keyword_lines = ['# keywords'] + keyword_lines + ['']
+
+    unindented = '\n'.join(keyword_lines + code_lines)
+    return {'file':file, 'source':unindented}
+
+def _unindent_lines(lines):
+    first_line = lines[0]
     first_indent = len(first_line) - len(first_line.lstrip())
 
-    unindented_lines = [line[first_indent:] for line in body_lines]
-    unindented = '\n'.join(unindented_lines)
-    file = inspect.getsourcefile(func)
-    return {'file':file, 'source':unindented}
+    unindented_lines = [line[first_indent:] for line in lines]
+    return unindented_lines
 
 CODE_FORMAT = """
 from ipycli.cell_func import get_source
@@ -162,3 +196,28 @@ def _getsourcelines(object, cache_key):
 def getsource(object, cache_key):
     lines, lnum = getsourcelines(object, cache_key)
     return ''.join(lines)
+
+def _func_keywords(func):
+    argspec = inspect.getargspec(func)
+    args = argspec.args
+    if not args:
+        return {}
+    defaults = argspec.defaults
+    if len(args) != len(defaults):
+        raise Exception("We only support kwargs")
+    keywords = dict(zip(args, defaults))
+    return keywords
+
+def _partial_keywords(func):
+    keywords = _func_keywords(func.func)
+    if func.keywords:
+        keywords.update(func.keywords)
+    return keywords
+
+def get_callable_keywords(func):
+    """
+    Grab the defined keywords for a function or partial.
+    """
+    if isinstance(func, partial):
+        return _partial_keywords(func)
+    return _func_keywords(func)
