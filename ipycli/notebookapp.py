@@ -543,7 +543,6 @@ class NotebookApp(BaseIPythonApplication):
         )
         self.notebook_manager = NotebookManager(config=self.config, log=self.log)
         self.log.info("Serving notebooks from %s", self.notebook_manager.notebook_dir)
-        self.notebook_manager.list_notebooks()
         self.cluster_manager = ClusterManager(config=self.config, log=self.log)
         self.cluster_manager.update_profiles()
 
@@ -688,6 +687,8 @@ class NotebookApp(BaseIPythonApplication):
             ghub = gist_hub(self.github_user, self.github_pw)
             # hack
             self.notebook_manager.ghub = ghub
+            # initial load
+            self.notebook_manager.refresh_notebooks(skip_github=False)
 
         if self.open_browser or self.file_to_run:
             ip = self.ip or '127.0.0.1'

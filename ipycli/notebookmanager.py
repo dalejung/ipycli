@@ -166,12 +166,13 @@ class NotebookManager(LoggingConfigurable):
         """
             List both inactive and active notebooks
         """
-        self.refresh_notebooks()
+        #self.refresh_notebooks()
         # regular listing doesn't show transients
         notebooks = []
         transients = []
 
-        for backend, nbs in self.all_mapping.items():
+        for backend in self.notebook_projects:
+            nbs = backend.notebooks()
             if hasattr(backend, 'tag') and backend.tag == '#transient':
                 transients = nbs
             else:
@@ -225,7 +226,7 @@ class NotebookManager(LoggingConfigurable):
 
         return data
 
-    def refresh_notebooks(self, skip_github=False):
+    def refresh_notebooks(self, skip_github=True):
         # HACK
         if self.ghub and not skip_github:
             projects = self.ghub.get_gist_projects()
