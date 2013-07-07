@@ -83,10 +83,6 @@ class DirectoryProject(object):
                 raise web.HTTPError(400, u'Unexpected error while saving notebook as script: %s' % e)
 
     def autosave_notebook(self, nb, nbo, client_id):
-        #old_path = nbo.path 
-        #ndir, filename = os.path.split(old_path)
-        #filename = '.' + filename + '.' + client_id + ".save"
-        #path = os.path.join(ndir, filename)
         self.save_notebook_object(nb, path=nbo.path)
 
     def delete_notebook(self, path):
