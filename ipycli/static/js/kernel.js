@@ -15,11 +15,12 @@ var IPython = (function (IPython) {
 
     // Initialization and connection.
 
-    var Kernel = function (base_url) {
+    var Kernel = function (base_url, kernel_path) {
         this.kernel_id = null;
         this.shell_channel = null;
         this.iopub_channel = null;
         this.base_url = base_url;
+        this.kernel_path = kernel_path;
         this.running = false;
         this.username = "username";
         this.session_id = utils.uuid();
@@ -55,6 +56,9 @@ var IPython = (function (IPython) {
         if (!this.running) {
             var qs = $.param({notebook:notebook_id});
             var url = this.base_url + '?' + qs;
+            if (this.kernel_path) {
+              var url = this.base_url + '/' +  this.kernel_path + '?' + qs;
+            }
             $.post(url,
                 $.proxy(that._kernel_started,that),
                 'json'
@@ -83,10 +87,13 @@ var IPython = (function (IPython) {
         this.kernel_id = json.kernel_id;
         var ws_url = json.ws_url;
         if (ws_url.match(/wss?:\/\//) == null) {
-            ws_url = "ws" + location.origin.substr(4) + ws_url;
+            ws_url = "ws" + this.base_url.substr(4) + ws_url;
         };
         this.ws_url = ws_url;
         this.kernel_url = this.base_url + "/" + this.kernel_id;
+        if (this.kernel_path) {
+          this.kernel_url = this.base_url + "/" + this.kernel_path + '/' + this.kernel_id;
+        }
         this.start_channels();
         this.shell_channel.onmessage = $.proxy(this._handle_shell_reply,this);
         this.iopub_channel.onmessage = $.proxy(this._handle_iopub_reply,this);
@@ -129,6 +136,9 @@ var IPython = (function (IPython) {
         var that = this;
         this.stop_channels();
         var ws_url = this.ws_url + this.kernel_url;
+        if (this.kernel_path) {
+          ws_url = this.ws_url + '/' + this.kernel_path + '/' + this.kernel_id;
+        }
         console.log("Starting WS:", ws_url, 'ws', this.ws_url, 'kn', this.kernel_url);
         this.shell_channel = new this.WebSocket(ws_url + "/shell");
         this.stdin_channel = new this.WebSocket(ws_url + "/stdin");
