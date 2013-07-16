@@ -32,6 +32,7 @@ from IPython.external.decorator import decorator
 from IPython.kernel.zmq.session import Session
 from IPython.lib.security import passwd_check
 from IPython.utils.jsonutil import date_default
+from IPython.frontend.html.notebook.base.handlers import IPythonHandler
 
 try:
     from docutils.core import publish_string
@@ -139,66 +140,20 @@ def authenticate_unless_readonly(f, self, *args, **kwargs):
 
 class RequestHandler(web.RequestHandler):
     """RequestHandler with default variable setting."""
+    def set_default_headers(self):
+        self.set_header("Access-Control-Allow-Origin", "*")
+        self.set_header("Access-Control-Allow-Credentials", "true")
+        self.set_header("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS")
+        self.set_header("Access-Control-Allow-Headers",
+            "Content-Type, Depth, User-Agent, X-File-Size, X-Requested-With, X-Requested-By, If-Modified-Since, X-File-Name, Cache-Control")
 
     def render(*args, **kwargs):
         kwargs.setdefault('message', '')
         return web.RequestHandler.render(*args, **kwargs)
 
-class AuthenticatedHandler(RequestHandler):
-    """A RequestHandler with an authenticated user."""
-
-    def get_current_user(self):
-        user_id = self.get_secure_cookie("username")
-        # For now the user_id should not return empty, but it could eventually
-        if user_id == '':
-            user_id = 'anonymous'
-        if user_id is None:
-            # prevent extra Invalid cookie sig warnings:
-            self.clear_cookie('username')
-            if not self.application.password and not self.application.read_only:
-                user_id = 'anonymous'
-        return user_id
-
-    @property
-    def logged_in(self):
-        """Is a user currently logged in?
-
-        """
-        user = self.get_current_user()
-        return (user and not user == 'anonymous')
-
-    @property
-    def login_available(self):
-        """May a user proceed to log in?
-
-        This returns True if login capability is available, irrespective of
-        whether the user is already logged in or not.
-
-        """
-        return bool(self.application.password)
-
-    @property
-    def read_only(self):
-        """Is the notebook read-only?
-
-        """
-        return self.application.read_only
-
-    @property
-    def ws_url(self):
-        """websocket url matching the current request
-
-        turns http[s]://host[:port] into
-                ws[s]://host[:port]
-        """
-        proto = self.request.protocol.replace('http', 'ws')
-        host = self.application.ipython_app.websocket_host # default to config value
-        if host == '':
-            host = self.request.host # get from request
-        return "%s://%s" % (proto, host)
 
 
-class AuthenticatedFileHandler(AuthenticatedHandler, web.StaticFileHandler):
+class AuthenticatedFileHandler(IPythonHandler, web.StaticFileHandler):
     """static files should only be accessible when logged in"""
 
     @authenticate_unless_readonly
@@ -206,7 +161,7 @@ class AuthenticatedFileHandler(AuthenticatedHandler, web.StaticFileHandler):
         return web.StaticFileHandler.get(self, path)
 
 
-class ProjectDashboardHandler(AuthenticatedHandler):
+class ProjectDashboardHandler(IPythonHandler):
 
     @authenticate_unless_readonly
     def get(self, project=None):
@@ -223,7 +178,7 @@ class ProjectDashboardHandler(AuthenticatedHandler):
         )
 
 
-class LoginHandler(AuthenticatedHandler):
+class LoginHandler(IPythonHandler):
 
     def _render(self, message=None):
         self.render('login.html',
@@ -253,7 +208,7 @@ class LoginHandler(AuthenticatedHandler):
         self.redirect(self.get_argument('next', default='/'))
 
 
-class LogoutHandler(AuthenticatedHandler):
+class LogoutHandler(IPythonHandler):
 
     def get(self):
         self.clear_cookie('username')
@@ -271,7 +226,7 @@ class LogoutHandler(AuthenticatedHandler):
                     message=message)
 
 
-class NewHandler(AuthenticatedHandler):
+class NewHandler(IPythonHandler):
 
     @web.authenticated
     def get(self, path=None, public=False):
@@ -329,7 +284,7 @@ class NewHandler(AuthenticatedHandler):
         self.finish(jsonapi.dumps(data))
 
 
-class NamedNotebookHandler(AuthenticatedHandler):
+class NamedNotebookHandler(IPythonHandler):
 
     @authenticate_unless_readonly
     def get(self, notebook_id):
@@ -352,7 +307,7 @@ class NamedNotebookHandler(AuthenticatedHandler):
             mathjax_url=self.application.ipython_app.mathjax_url,
         )
 
-class PathedNotebookHandler(AuthenticatedHandler):
+class PathedNotebookHandler(IPythonHandler):
 
     @authenticate_unless_readonly
     def get(self, notebook_path):
@@ -378,7 +333,7 @@ class PathedNotebookHandler(AuthenticatedHandler):
         )
 
 
-class PrintNotebookHandler(AuthenticatedHandler):
+class PrintNotebookHandler(IPythonHandler):
 
     @authenticate_unless_readonly
     def get(self, notebook_id):
@@ -404,7 +359,7 @@ class PrintNotebookHandler(AuthenticatedHandler):
 #-----------------------------------------------------------------------------
 
 
-class MainKernelHandler(AuthenticatedHandler):
+class MainKernelHandler(IPythonHandler):
 
     @web.authenticated
     def get(self):
@@ -429,7 +384,7 @@ class MainKernelHandler(AuthenticatedHandler):
         self.finish(jsonapi.dumps(data))
 
 
-class KernelHandler(AuthenticatedHandler):
+class KernelHandler(IPythonHandler):
 
     SUPPORTED_METHODS = ('DELETE')
 
@@ -441,7 +396,7 @@ class KernelHandler(AuthenticatedHandler):
         self.finish()
 
 
-class KernelActionHandler(AuthenticatedHandler):
+class KernelActionHandler(IPythonHandler):
 
     @web.authenticated
     def post(self, kernel_id, action):
@@ -678,7 +633,7 @@ class ShellHandler(AuthenticatedZMQStreamHandler):
 # Notebook web service handlers
 #-----------------------------------------------------------------------------
 
-class NotebookRootHandler(AuthenticatedHandler):
+class NotebookRootHandler(IPythonHandler):
 
     @authenticate_unless_readonly
     def get(self):
@@ -715,7 +670,7 @@ class NotebookRootHandler(AuthenticatedHandler):
         self.set_header('Location', '/'+notebook_id)
         self.finish(jsonapi.dumps(notebook_id))
 
-class AllNotebookRootHandler(AuthenticatedHandler):
+class AllNotebookRootHandler(IPythonHandler):
 
     @authenticate_unless_readonly
     def get(self):
@@ -735,7 +690,7 @@ class AllNotebookRootHandler(AuthenticatedHandler):
         data = {'files': files, 'projects': backends}
         self.finish(jsonapi.dumps(data))
 
-class ActiveNotebooksHandler(AuthenticatedHandler):
+class ActiveNotebooksHandler(IPythonHandler):
 
     @authenticate_unless_readonly
     def get(self):
@@ -758,7 +713,7 @@ class ActiveNotebooksHandler(AuthenticatedHandler):
         data = {'files': files, 'projects': backends}
         self.finish(jsonapi.dumps(data))
 
-class NotebookTagHandler(AuthenticatedHandler):
+class NotebookTagHandler(IPythonHandler):
 
     @authenticate_unless_readonly
     def get(self, tag):
@@ -780,7 +735,7 @@ class NotebookTagHandler(AuthenticatedHandler):
         data = {'files': files, 'projects': backends}
         self.finish(jsonapi.dumps(data))
 
-class NotebookDirHandler(AuthenticatedHandler):
+class NotebookDirHandler(IPythonHandler):
 
     @authenticate_unless_readonly
     def get(self, dir):
@@ -802,7 +757,7 @@ class NotebookDirHandler(AuthenticatedHandler):
         data = {'files': files, 'projects': backends}
         self.finish(jsonapi.dumps(data))
 
-class NotebookHandler(AuthenticatedHandler):
+class NotebookHandler(IPythonHandler):
 
     SUPPORTED_METHODS = ('GET', 'PUT', 'DELETE')
 
@@ -837,7 +792,7 @@ class NotebookHandler(AuthenticatedHandler):
         self.set_status(204)
         self.finish()
 
-class AutosaveNotebookHandler(AuthenticatedHandler):
+class AutosaveNotebookHandler(IPythonHandler):
 
     SUPPORTED_METHODS = ('PUT')
 
@@ -850,7 +805,7 @@ class AutosaveNotebookHandler(AuthenticatedHandler):
         self.set_status(204)
         self.finish()
 
-class RenameNotebookHandler(AuthenticatedHandler):
+class RenameNotebookHandler(IPythonHandler):
 
     SUPPORTED_METHODS = ('PUT')
 
@@ -864,7 +819,7 @@ class RenameNotebookHandler(AuthenticatedHandler):
         self.finish()
 
 
-class NotebookCopyHandler(AuthenticatedHandler):
+class NotebookCopyHandler(IPythonHandler):
 
     @web.authenticated
     def get(self, notebook_id):
@@ -885,7 +840,7 @@ class NotebookCopyHandler(AuthenticatedHandler):
             mathjax_url=self.application.ipython_app.mathjax_url,
         )
 
-class AddNotebookDirHandler(AuthenticatedHandler):
+class AddNotebookDirHandler(IPythonHandler):
 
     @web.authenticated
     def get(self, path):
@@ -901,7 +856,7 @@ class AddNotebookDirHandler(AuthenticatedHandler):
 #-----------------------------------------------------------------------------
 
 
-class MainClusterHandler(AuthenticatedHandler):
+class MainClusterHandler(IPythonHandler):
 
     @web.authenticated
     def get(self):
@@ -909,7 +864,7 @@ class MainClusterHandler(AuthenticatedHandler):
         self.finish(jsonapi.dumps(cm.list_profiles()))
 
 
-class ClusterProfileHandler(AuthenticatedHandler):
+class ClusterProfileHandler(IPythonHandler):
 
     @web.authenticated
     def get(self, profile):
@@ -917,7 +872,7 @@ class ClusterProfileHandler(AuthenticatedHandler):
         self.finish(jsonapi.dumps(cm.profile_info(profile)))
 
 
-class ClusterActionHandler(AuthenticatedHandler):
+class ClusterActionHandler(IPythonHandler):
 
     @web.authenticated
     def post(self, profile, action):
@@ -938,7 +893,7 @@ class ClusterActionHandler(AuthenticatedHandler):
 #-----------------------------------------------------------------------------
 
 
-class RSTHandler(AuthenticatedHandler):
+class RSTHandler(IPythonHandler):
 
     @web.authenticated
     def post(self):

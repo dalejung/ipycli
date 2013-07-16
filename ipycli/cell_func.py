@@ -4,7 +4,7 @@ from functools import partial
 import io
 import re
 from Queue import Empty
-from ipycli.handlers import AuthenticatedHandler,authenticate_unless_readonly
+from ipycli.handlers import IPythonHandler,authenticate_unless_readonly
 from zmq.utils import jsonapi
 import time
 
@@ -64,7 +64,7 @@ from ipycli.cell_func import get_source
 get_source({func_name}, "{func_name}")
 """
 
-class CellFuncHandler(AuthenticatedHandler):
+class CellFuncHandler(IPythonHandler):
     @authenticate_unless_readonly
     def get(self, kernel_id, func_name):
         km = self.application.kernel_manager
