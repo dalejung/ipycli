@@ -138,20 +138,18 @@ def authenticate_unless_readonly(f, self, *args, **kwargs):
 # Top-level handlers
 #-----------------------------------------------------------------------------
 
-class RequestHandler(web.RequestHandler):
-    """RequestHandler with default variable setting."""
-    def set_default_headers(self):
+def set_default_headers(self):
+    try:
         self.set_header("Access-Control-Allow-Origin", "*")
         self.set_header("Access-Control-Allow-Credentials", "true")
         self.set_header("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS")
         self.set_header("Access-Control-Allow-Headers",
             "Content-Type, Depth, User-Agent, X-File-Size, X-Requested-With, X-Requested-By, If-Modified-Since, X-File-Name, Cache-Control")
+    except:
+        # doesn't work for web sockets
+        pass
 
-    def render(*args, **kwargs):
-        kwargs.setdefault('message', '')
-        return web.RequestHandler.render(*args, **kwargs)
-
-
+IPythonHandler.set_default_headers = set_default_headers
 
 class AuthenticatedFileHandler(IPythonHandler, web.StaticFileHandler):
     """static files should only be accessible when logged in"""
