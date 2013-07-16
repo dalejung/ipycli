@@ -87,7 +87,11 @@ var IPython = (function (IPython) {
         this.kernel_id = json.kernel_id;
         var ws_url = json.ws_url;
         if (ws_url.match(/wss?:\/\//) == null) {
+          if (this.kernel_path) {
             ws_url = "ws" + this.base_url.substr(4) + ws_url;
+          } else {
+            ws_url = "ws" + location.origin.substr(4) + ws_url;
+          }
         };
         this.ws_url = ws_url;
         this.kernel_url = this.base_url + "/" + this.kernel_id;
