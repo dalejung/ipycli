@@ -257,6 +257,7 @@ div.output_html {
 }
 
 div.output_png {
+  margin-left: -11ex; /* show full width, negate out_prompt_overlay */
 }
 
 div.output_jpeg {
