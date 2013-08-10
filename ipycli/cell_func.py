@@ -4,9 +4,11 @@ from functools import partial
 import io
 import re
 from Queue import Empty
-from ipycli.handlers import IPythonHandler,authenticate_unless_readonly
 from zmq.utils import jsonapi
 import time
+
+from ipycli.handlers import IPythonHandler,authenticate_unless_readonly
+import kernel_client 
 
 def get_source(func, func_name):
     """
@@ -70,69 +72,12 @@ class CellFuncHandler(IPythonHandler):
         km = self.application.kernel_manager
         client = km.get_kernel(kernel_id).client()
 
-        client.start_channels()
+        client = kernel_client.KernelClient(client)
         code = CODE_FORMAT.format(func_name=func_name)
-        data = run_cell(client, code)
-        client.stop_channels()
+        data = client.execute(code)
 
         data = data['text/plain']
         self.finish(jsonapi.dumps(data))
-
-def run_cell(client, cell, store_history=True):
-    """
-    Taken from ipython.frontend.terminal.console.ZMQInteractiveShell
-    """
-    if (not cell) or cell.isspace():
-        return
-
-    # flush stale replies, which could have been ignored, due to missed heartbeats
-    while client.shell_channel.msg_ready():
-        client.shell_channel.get_msg()
-    # shell_channel.execute takes 'hidden', which is the inverse of store_hist
-    msg_id = client.shell_channel.execute(cell, not store_history)
-    while not client.shell_channel.msg_ready(): # wait for completion
-        pass
-
-    if client.shell_channel.msg_ready():
-        handle_execute_reply(client, msg_id)
-    # meh. sometimes iopub doesn't have the pyout.
-    # sleep for 100ms to make sure it's in there
-    # probably shouldn't be here
-    time.sleep(.1)
-    data = get_pyout(client)
-    return data
-
-def handle_execute_reply(client, msg_id):
-    msg = client.shell_channel.get_msg()
-    if msg["parent_header"].get("msg_id", None) == msg_id:
-        
-        content = msg["content"]
-        status = content['status']
-        
-        if status == 'aborted':
-            #self.write('Aborted\n')
-            return
-        elif status == 'ok':
-            # print execution payloads as well:
-            for item in content["payload"]:
-                text = item.get('text', None)
-                if text:
-                    pass
-                    #page.page(text)
-        elif status == 'error':
-            for frame in content["traceback"]:
-                print(frame)
-
-def get_pyout(client):
-    while client.iopub_channel.msg_ready():
-        sub_msg = client.iopub_channel.get_msg()
-        msg_type = sub_msg['header']['msg_type']
-        parent = sub_msg["parent_header"]
-        if parent and client.session.session != parent['session']:
-            continue
-        if msg_type == 'pyout':
-            data = sub_msg['content']['data']
-            return data
 
 def findsource(object, cache_key):
     """
