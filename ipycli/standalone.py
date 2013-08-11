@@ -7,14 +7,18 @@ class StandaloneHandler(IPythonHandler):
     @authenticate_unless_readonly
     def get(self, kernel_id, html_obj):
         km = self.application.kernel_manager
-        client = km.get_kernel(kernel_id).client()
+        # kernel_id can also be a notebook_id
+        try:
+            client = km.get_kernel(kernel_id).client()
+        except:
+            kernel_id = km.kernel_for_notebook(kernel_id)
+            client = km.get_kernel(kernel_id).client()
+
         client = kernel_client.KernelClient(client)
 
-        client.start_channels()
-        code = '{html_obj}.to_html()'.format(hmtl_obj=html_obj);
-        data = run_cell(client, code)
-        client.stop_channels()
+        code = '{html_obj}.to_html()'.format(html_obj=html_obj);
+        data = client.execute(code)
+        client.exit()
 
         data = data['text/plain']
-        self.finish(jsonapi.dumps(data))
-
+        self.finish(data)
