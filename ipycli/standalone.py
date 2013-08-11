@@ -1,5 +1,6 @@
+import os.path
+
 from ipycli.handlers import IPythonHandler,authenticate_unless_readonly
-from zmq.utils import jsonapi
 
 import kernel_client 
 
@@ -9,6 +10,9 @@ get_html({html_obj}, "{attr}")
 """
 
 def get_html(html_obj, attr):
+    if hasattr(html_obj, 'html_obj'):
+        html_obj = getattr(html_obj, 'html_obj')
+
     if hasattr(html_obj, attr):
         html = getattr(html_obj, attr)
 
@@ -47,3 +51,23 @@ class StandaloneHandler(IPythonHandler):
             html = eval(data['text/plain'])
 
         self.finish(html)
+
+class DirectoryHtml(object):
+    """
+    An HTMLObject that refences a directory
+    """
+    def __init__(self, dir, default=None):
+        self.dir = dir
+        self.default = default
+
+    def __getitem__(self, key):
+        path = os.path.join(self.dir, key)
+        if os.path.exists(path):
+            with open(path) as f:
+                html = f.read()
+            return html
+        raise KeyError()
+
+    def to_html(self):
+        if self.default:
+            return self[self.default]
