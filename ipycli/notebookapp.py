@@ -177,6 +177,7 @@ class NotebookWebApplication(web.Application):
             (r"/ndir/(.*)", ProjectDashboardHandler),
 
             (r"/cell_func/(.*)/(.*)", CellFuncHandler),
+            (r"/standalone/(.*)/(.*)/(.*)", StandaloneHandler),
             (r"/standalone/(.*)/(.*)", StandaloneHandler),
         ]
 
