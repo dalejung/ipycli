@@ -72,11 +72,20 @@ class DirectoryHtml(object):
         if self.default:
             return self[self.default]
 
-def link(html_obj):
+def link(html_obj, link_name=None):
     """ 
-    Create a link to the HTMLObject that works from notebook page.
+    Use a Javascript Object so we can output the link using href and not onclick
 
     `window.location.pathname.split('/')[1]` should be notebook_id
     """
-    from IPython.core.display import HTML
-    return HTML("""<a href="#" onclick="window.open('/standalone/'+window.location.pathname.split('/')[1]+'/{html_obj}', '_new')">Lab</a>""".format(html_obj=html_obj))
+    from IPython.core.display import Javascript
+    if link_name is None:
+        link_name = html_obj
+    js = """
+    (function() {{
+        var link_href = '/standalone/'+window.location.pathname.split('/')[1]+'/{html_obj}';
+        element.append('<a target="_new" href="'+link_href+'">{link_name}</a>');
+        container.show()
+    }})()
+    """.format(html_obj=html_obj, link_name=link_name)
+    return Javascript(data=js)
