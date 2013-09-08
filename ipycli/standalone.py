@@ -31,6 +31,7 @@ class StandaloneHandler(IPythonHandler):
     def get(self, kernel_id, html_obj, attr=None):
         if not attr:
             self.redirect(self.request.path + '/to_html')
+            return
 
         km = self.application.kernel_manager
         # kernel_id can also be a notebook_id
