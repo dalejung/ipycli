@@ -221,7 +221,9 @@ class NotebookManager(LoggingConfigurable):
                 notebook_id = self.new_notebook_id(nb)
             else:
                 notebook_id = self.rev_mapping[nb]
-            data.append(dict(notebook_id=notebook_id,path=nb.path, name=nb.name))
+            nbdict = dict(notebook_id=notebook_id,path=nb.path, name=nb.name)
+            nbdict['mtime'] = str(nb.mtime) or ''
+            data.append(nbdict)
 
         return data
 
