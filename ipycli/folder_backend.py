@@ -7,6 +7,10 @@ from tornado import web
 
 from IPython.nbformat import current
 
+def getmtime(file):
+    timestamp = os.path.getmtime(file)
+    return datetime.datetime.fromtimestamp(timestamp)
+
 class DirectoryProject(object):
     def __init__(self, dir, filename_ext):
         self.dir = dir
@@ -25,7 +29,8 @@ class DirectoryProject(object):
     def notebooks(self):
         names = glob.glob(os.path.join(self.dir,
                                        '*' + self.filename_ext))
-        nbs = [NBObject(backend=self, path=name) for name in names]
+        files = [(name, getmtime(name)) for name in names]
+        nbs = [NBObject(backend=self, path=name, mtime=date) for name, date in files]
         return nbs
 
     def __hash__(self):
@@ -116,11 +121,12 @@ class DirectoryProject(object):
         return path, name
 
 class NBObject(object):
-    def __init__(self, backend, path, name=None):
+    def __init__(self, backend, path, name=None, mtime=None):
         self.backend = backend
         self.path = path
         self._name = name 
         self.tags = []
+        self.mtime = mtime
 
     @property
     def name(self):
