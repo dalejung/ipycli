@@ -222,7 +222,9 @@ class NotebookManager(LoggingConfigurable):
             else:
                 notebook_id = self.rev_mapping[nb]
             nbdict = dict(notebook_id=notebook_id,path=nb.path, name=nb.name)
-            nbdict['mtime'] = str(nb.mtime) or ''
+            nbdict['mtime'] = ''
+            if nb.mtime:
+                nbdict['mtime'] = nb.mtime.strftime("%m/%d/%Y")
             data.append(nbdict)
 
         return data
