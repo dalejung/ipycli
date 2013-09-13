@@ -185,7 +185,6 @@ class NotebookManager(LoggingConfigurable):
 
 
         all_notebooks = itertools.chain(notebooks, pathed_notebooks)
-        all_notebooks = sorted(all_notebooks, key=lambda nb: nb.name)
 
         all_notebooks = [notebook for notebook in all_notebooks if '#inactive' not in notebook.tags]
         transients = [notebook for notebook in transients if '#inactive' not in notebook.tags]
