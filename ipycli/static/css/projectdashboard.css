@@ -71,6 +71,11 @@
     float: right;
 }
 
+.item_mtime {
+    float: right;
+    margin-right:10px;
+}
+
 .item_buttons .upload_button {
     color: darkred;
 }

@@ -130,6 +130,7 @@ var IPython = (function (IPython) {
             var notebook_id = data[i].notebook_id;
             var nbname = data[i].name;
             var kernel = data[i].kernel_id;
+            var mtime = data[i].mtime;
             var item = this.new_notebook_item(i, pdiv);
             this.add_link(notebook_id, nbname, item);
             if (!IPython.read_only){
@@ -140,6 +141,7 @@ var IPython = (function (IPython) {
                     this.add_shutdown_button(item,kernel);
                 }
             }
+            this.add_mtime(notebook_id, mtime, item);
         };
     };
 
@@ -326,6 +328,21 @@ var IPython = (function (IPython) {
         };
     };
 
+    NotebookList.prototype.add_mtime = function (notebook_id, mtime, item) {
+        item.data('mtime', mtime);
+        var new_item_mtime = $('<span/>').addClass('item_mtime');
+        var href = $('body').data('baseProjectUrl')+notebook_id;
+        new_item_mtime.append(
+            $('<span/>').
+            text(mtime)
+        );
+        var e = item.find('.item_mtime');
+        if (e.length === 0) {
+            item.append(new_item_mtime);
+        } else {
+            e.replaceWith(new_item_mtime);
+        };
+    };
 
     NotebookList.prototype.add_name_input = function (nbname, item) {
         item.data('nbname', nbname);
