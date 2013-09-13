@@ -244,8 +244,8 @@ class TaggedGistProject(GistProject):
 
     def notebooks(self):
         notebooks = self.get_notebooks()
-        notebooks = [GistObject(self, path, name, tags=get_gist_tags(gist.description)) for path, name, gist 
-                     in notebooks]
+        notebooks = [GistObject(self, path, name, tags=get_gist_tags(gist.description), mtime=gist.updated_at) \
+                     for path, name, gist in notebooks]
         return notebooks
 
     def _get_gist_by_path(self, path):
