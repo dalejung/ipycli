@@ -31,7 +31,8 @@ class DirectoryProject(object):
                                        '*' + self.filename_ext))
         files = [(name, getmtime(name)) for name in names]
         nbs = [NBObject(backend=self, path=name, mtime=date) for name, date in files]
-        return nbs
+        sorted_nbs = sorted(nbs, key=lambda x: x.mtime, reverse=True)
+        return sorted_nbs
 
     def __hash__(self):
         return hash(self.dir)
