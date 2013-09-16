@@ -242,7 +242,7 @@ class NewHandler(IPythonHandler):
         if path:
             ndir, name = os.path.split(path)
             # see if notebook exists
-            for be in nbm.notebook_dirs:
+            for be in nbm.notebook_dirs.values():
                 if ndir == be.path:
                     backend = be
                     break
