@@ -14,6 +14,8 @@ def get_notebook_project_gists(gists, show_all=False):
     nb_gists = []
     for gist in gists:
         desc = gist.description
+        if not desc:
+            continue
         tags = get_gist_tags(desc)
         if "#notebook-project" not in tags:
             continue
@@ -30,6 +32,8 @@ def get_notebook_single_gists(gists, show_all=False):
     tagged = {}
     for gist in gists:
         desc = gist.description
+        if not desc:
+            continue
 
         tags = get_gist_tags(desc)
         if "#notebook" not in tags:
@@ -63,7 +67,7 @@ def change_gist_name(gist, name):
     return new_name
 
 def new_notebook_files(name='default.ipynb'):
-    # make a new file  ugh    
+    # make a new file  ugh
     metadata = current.new_metadata(name=name)
     nb = current.new_notebook(metadata=metadata)
     content = current.writes(nb, format=u'json')
@@ -163,7 +167,7 @@ class GistProject(object):
     def increment_filename(self, basename):
         """
         Return a non-used filename of the form basename<int>.
-        
+
         """
         i = 0
         while True:
@@ -233,7 +237,7 @@ class TaggedGistProject(GistProject):
         return self._name
 
     def _gist_name(self, gist):
-        name =  get_gist_name(gist) 
+        name =  get_gist_name(gist)
         if gist.public and gist.id not in name.split():
             name = name + "   " + gist.id
         return name
@@ -276,8 +280,8 @@ class TaggedGistProject(GistProject):
         file = self.get_gist_file(gist)
         if file:
             return file.content
-        
-        # make a new file  ugh    
+
+        # make a new file  ugh
         files = new_notebook_files()
         self.edit_gist(gist, files=files)
         # hold to your butts, recursion!
@@ -339,7 +343,7 @@ class GistHub(object):
         projects = [GistProject(gist, self.hub) for gist in project_gists]
 
         single_gists = get_notebook_single_gists(gists, show_all=show_all)
-        singles = [TaggedGistProject(tag, tgists, self.hub) for tag, tgists 
+        singles = [TaggedGistProject(tag, tgists, self.hub) for tag, tgists
                    in single_gists.items()]
 
         gprojects = list(itertools.chain(projects, singles))

@@ -43,13 +43,13 @@ from tornado import web
 from jinja2 import Environment, FileSystemLoader
 
 # Our own libraries
-from IPython.frontend.html.notebook.services.kernels.kernelmanager \
+from IPython.html.services.kernels.kernelmanager \
         import MappingKernelManager
 
-import IPython.frontend.html.notebook.services.kernels.handlers \
+import IPython.html.services.kernels.handlers \
         as kern_handlers
 
-from IPython.frontend.html.notebook import DEFAULT_STATIC_FILES_PATH
+from IPython.html import DEFAULT_STATIC_FILES_PATH
 
 from IPython.utils.traitlets import (
     Dict, Unicode, Integer, List, Bool, Bytes,
@@ -64,22 +64,22 @@ from .handlers import (LoginHandler, LogoutHandler,
     MainClusterHandler, ClusterProfileHandler, ClusterActionHandler,
     PathedNotebookHandler, AddNotebookDirHandler, RenameNotebookHandler,
     AutosaveNotebookHandler, NotebookTagHandler, AllNotebookRootHandler,
-    ActiveNotebooksHandler, NotebookDirHandler 
+    ActiveNotebooksHandler, NotebookDirHandler
 )
 
 from .cell_func import CellFuncHandler
 from .standalone import StandaloneHandler
 
-from IPython.frontend.html.notebook.base.handlers \
+from IPython.html.base.handlers \
         import FileFindHandler,AuthenticatedFileHandler
 
 from .notebookmanager import NotebookManager
-from IPython.frontend.html.notebook.clustermanager import ClusterManager
+from IPython.html.services.clusters.clustermanager import ClusterManager
 
 from IPython.config.application import catch_config_error, boolean_flag
 from IPython.core.application import BaseIPythonApplication
 from IPython.core.profiledir import ProfileDir
-from IPython.frontend.consoleapp import IPythonConsoleApp
+from IPython.consoleapp import IPythonConsoleApp
 from IPython.kernel import swallow_argv
 from IPython.kernel.zmq.session import Session, default_secure
 from IPython.kernel.zmq.zmqshell import ZMQInteractiveShell
@@ -140,7 +140,7 @@ def random_ports(port, n):
 
 class NotebookWebApplication(web.Application):
 
-    def __init__(self, ipython_app, kernel_manager, notebook_manager, 
+    def __init__(self, ipython_app, kernel_manager, notebook_manager,
                  cluster_manager, log,
                  base_project_url, settings_overrides):
         handlers = [
@@ -190,11 +190,11 @@ class NotebookWebApplication(web.Application):
         # make the patterns unicode, and ultimately result in unicode
         # keys in kwargs to handler._execute(**kwargs) in tornado.
         # This enforces that base_project_url be ascii in that situation.
-        # 
+        #
         # Note that the URLs these patterns check against are escaped,
         # and thus guaranteed to be ASCII: 'héllo' is really 'h%C3%A9llo'.
         base_project_url = py3compat.unicode_to_str(base_project_url, 'ascii')
-        
+
         # prepend base_project_url onto the patterns that we match
         new_handlers = []
         for handler in handlers:
@@ -219,7 +219,7 @@ class NotebookWebApplication(web.Application):
         # make the patterns unicode, and ultimately result in unicode
         # keys in kwargs to handler._execute(**kwargs) in tornado.
         # This enforces that base_project_url be ascii in that situation.
-        # 
+        #
         # Note that the URLs these patterns check against are escaped,
         # and thus guaranteed to be ASCII: 'héllo' is really 'h%C3%A9llo'.
         base_project_url = py3compat.unicode_to_str(base_project_url, 'ascii')
@@ -233,18 +233,18 @@ class NotebookWebApplication(web.Application):
             static_path=static_path,
             static_handler_class = FileFindHandler,
             static_url_prefix = url_path_join(base_project_url,'/static/'),
-            
+
             # authentication
             cookie_secret=ipython_app.cookie_secret,
             login_url=url_path_join(base_project_url,'/login'),
             read_only=ipython_app.read_only,
             password=ipython_app.password,
-            
+
             # managers
             kernel_manager=kernel_manager,
             notebook_manager=notebook_manager,
             cluster_manager=cluster_manager,
-            
+
             # IPython stuff
             mathjax_url=ipython_app.mathjax_url,
             max_msg_size=ipython_app.max_msg_size,
@@ -269,23 +269,23 @@ flags['no-browser']=(
 flags['no-mathjax']=(
     {'NotebookApp' : {'enable_mathjax' : False}},
     """Disable MathJax
-    
+
     MathJax is the javascript library IPython uses to render math/LaTeX. It is
     very large, so you may want to disable it if you have a slow internet
     connection, or for offline use of the notebook.
-    
+
     When disabled, equations etc. will appear as their untransformed TeX source.
     """
 )
 flags['read-only'] = (
     {'NotebookApp' : {'read_only' : True}},
     """Allow read-only access to notebooks.
-    
+
     When using a password to protect the notebook server, this flag
     allows unauthenticated clients to view the notebook list, and
     individual notebooks, but not edit them, start kernels, or run
     code.
-    
+
     If no password is set, the server will be entirely read-only.
     """
 )
@@ -329,15 +329,15 @@ class NotebookApp(BaseIPythonApplication):
 
     name = 'ipython-notebook'
     default_config_file_name='ipython_notebook_config.py'
-    
+
     description = """
         The IPython HTML Notebook.
-        
+
         This launches a Tornado based HTML Notebook Server that serves up an
         HTML5/Javascript Notebook client.
     """
     examples = _examples
-    
+
     classes = IPythonConsoleApp.classes + [MappingKernelManager, NotebookManager]
     flags = Dict(flags)
     aliases = Dict(aliases)
@@ -371,19 +371,19 @@ class NotebookApp(BaseIPythonApplication):
         help="The number of additional ports to try if the specified port is not available."
     )
 
-    certfile = Unicode(u'', config=True, 
+    certfile = Unicode(u'', config=True,
         help="""The full path to an SSL/TLS certificate file."""
     )
 
-    github_user = Unicode(u'', config=True, 
+    github_user = Unicode(u'', config=True,
         help="""Github user to use for GIST backend"""
     )
 
-    github_pw = Unicode(u'', config=True, 
+    github_pw = Unicode(u'', config=True,
         help="""Github password to use for GIST backend"""
     )
-    
-    keyfile = Unicode(u'', config=True, 
+
+    keyfile = Unicode(u'', config=True,
         help="""The full path to a private key file for usage with SSL/TLS."""
     )
 
@@ -402,7 +402,7 @@ class NotebookApp(BaseIPythonApplication):
         help="""The random bytes used to secure cookies.
         By default this is a new random number every time you start the Notebook.
         Set it to a value in a config file to enable logins to persist across server sessions.
-        
+
         Note: Cookie secrets should be kept private, do not share config files with
         cookie_secret stored in plaintext (you can read the value from a file).
         """
@@ -425,15 +425,15 @@ class NotebookApp(BaseIPythonApplication):
                       standard library module, which allows setting of the
                       BROWSER environment variable to override it.
                       """)
-    
+
     read_only = Bool(False, config=True,
         help="Whether to prevent editing/execution of notebooks."
     )
-    
+
     webapp_settings = Dict(config=True,
             help="Supply overrides for the tornado.web.Application that the "
                  "IPython notebook uses.")
-    
+
     enable_mathjax = Bool(True, config=True,
         help="""Whether to enable MathJax for typesetting math/TeX
 
@@ -464,7 +464,7 @@ class NotebookApp(BaseIPythonApplication):
                        file to avoid a build step, or if user want to overwrite
                        some of the less variables without having to recompile
                        everything.
-                       
+
                        You will need to install the less.js component in the static directory
                        either in the source tree or in your profile folder.
                        """)
@@ -476,13 +476,13 @@ class NotebookApp(BaseIPythonApplication):
 
     extra_static_paths = List(Unicode, config=True,
         help="""Extra paths to search for serving static files.
-        
+
         This allows adding javascript/css to be available from the notebook server machine,
         or overriding individual files in the IPython"""
     )
     def _extra_static_paths_default(self):
         return [os.path.join(self.profile_dir.location, 'static')]
-    
+
     @property
     def static_file_path(self):
         """return extra paths + the default location"""
@@ -506,11 +506,11 @@ class NotebookApp(BaseIPythonApplication):
                 base = u"https://c328740.ssl.cf1.rackcdn.com"
             else:
                 base = u"http://cdn.mathjax.org"
-            
+
             url = base + u"/mathjax/latest/MathJax.js"
             self.log.info("Using MathJax from CDN: %s", url)
             return url
-    
+
     def _mathjax_url_changed(self, name, old, new):
         if new and not self.enable_mathjax:
             # enable_mathjax=False overrides mathjax_url
@@ -554,11 +554,11 @@ class NotebookApp(BaseIPythonApplication):
         # self.log is a child of. The logging module dipatches log messages to a log
         # and all of its ancenstors until propagate is set to False.
         self.log.propagate = False
-    
+
     def init_webapp(self):
         """initialize tornado webapp and httpserver"""
         self.web_app = NotebookWebApplication(
-            self, self.kernel_manager, self.notebook_manager, 
+            self, self.kernel_manager, self.notebook_manager,
             self.cluster_manager, self.log,
             self.base_project_url, self.webapp_settings
         )
@@ -591,7 +591,7 @@ class NotebookApp(BaseIPythonApplication):
             self.log.critical('ERROR: the notebook server could not be started because '
                               'no available port could be found.')
             self.exit(1)
-    
+
     def init_signal(self):
         # FIXME: remove this check when pyzmq dependency is >= 2.1.11
         # safely extract zmq version info:
@@ -608,7 +608,7 @@ class NotebookApp(BaseIPythonApplication):
             # but it will work
             signal.signal(signal.SIGINT, self._handle_sigint)
         signal.signal(signal.SIGTERM, self._signal_stop)
-    
+
     def _handle_sigint(self, sig, frame):
         """SIGINT handler spawns confirmation dialog"""
         # register more forceful signal handler for ^C^C case
@@ -620,17 +620,17 @@ class NotebookApp(BaseIPythonApplication):
         thread = threading.Thread(target=self._confirm_exit)
         thread.daemon = True
         thread.start()
-    
+
     def _restore_sigint_handler(self):
         """callback for restoring original SIGINT handler"""
         signal.signal(signal.SIGINT, self._handle_sigint)
-    
+
     def _confirm_exit(self):
         """confirm shutdown on ^C
-        
+
         A second ^C, or answering 'y' within 5s will cause shutdown,
         otherwise original SIGINT handler will be restored.
-        
+
         This doesn't work on Windows.
         """
         # FIXME: remove this delay when pyzmq dependency is >= 2.1.11
@@ -652,11 +652,11 @@ class NotebookApp(BaseIPythonApplication):
         # use IOLoop.add_callback because signal.signal must be called
         # from main thread
         ioloop.IOLoop.instance().add_callback(self._restore_sigint_handler)
-    
+
     def _signal_stop(self, sig, frame):
         self.log.critical("received signal %s, stopping", sig)
         ioloop.IOLoop.instance().stop()
-    
+
     @catch_config_error
     def initialize(self, argv=None):
         self.init_logging()
@@ -667,7 +667,7 @@ class NotebookApp(BaseIPythonApplication):
 
     def cleanup_kernels(self):
         """shutdown all kernels
-        
+
         The kernels will shutdown themselves when this process no longer exists,
         but explicit shutdown allows the KernelManagers to cleanup the connection files.
         """
@@ -721,7 +721,7 @@ class NotebookApp(BaseIPythonApplication):
             info("Interrupted...")
         finally:
             self.cleanup_kernels()
-    
+
 
 #-----------------------------------------------------------------------------
 # Main entry point

@@ -44,7 +44,7 @@ _old_auth = web.authenticated
 def debug_auth(*args, **kwargs):
     old_wrapped = _old_auth(*args, **kwargs)
     def new_wrapped(*args, **kwargs):
-        print 'start', args[0].__class__.__name__ 
+        print 'start', args[0].__class__.__name__
         res = old_wrapped(*args, **kwargs)
         print 'end', args[0].__class__.__name__
         return res
@@ -77,7 +77,7 @@ if tornado.version_info <= (2,1,1):
 
     def _execute(self, transforms, *args, **kwargs):
         from tornado.websocket import WebSocketProtocol8, WebSocketProtocol76
-        
+
         self.open_args = args
         self.open_kwargs = kwargs
 
@@ -87,20 +87,20 @@ if tornado.version_info <= (2,1,1):
         if self.request.headers.get("Sec-WebSocket-Version") in ("7", "8", "13"):
             self.ws_connection = WebSocketProtocol8(self)
             self.ws_connection.accept_connection()
-            
+
         elif self.request.headers.get("Sec-WebSocket-Version"):
             self.stream.write(tornado.escape.utf8(
                 "HTTP/1.1 426 Upgrade Required\r\n"
                 "Sec-WebSocket-Version: 8\r\n\r\n"))
             self.stream.close()
-            
+
         else:
             self.ws_connection = WebSocketProtocol76(self)
             self.ws_connection.accept_connection()
 
     websocket.WebSocketHandler._execute = _execute
     del _execute
-    
+
 #-----------------------------------------------------------------------------
 # Decorator for disabling read-only handlers
 #-----------------------------------------------------------------------------
@@ -115,11 +115,11 @@ def not_if_readonly(f, self, *args, **kwargs):
 @decorator
 def authenticate_unless_readonly(f, self, *args, **kwargs):
     """authenticate this page *unless* readonly view is active.
-    
+
     In read-only mode, the notebook list and print view should
     be accessible without authentication.
     """
-    
+
     @web.authenticated
     def auth_f(self, *args, **kwargs):
         return f(self, *args, **kwargs)
@@ -150,6 +150,8 @@ def set_default_headers(self):
         pass
 
 IPythonHandler.set_default_headers = set_default_headers
+# this is deprecated, but just keep around for backward compat
+IPythonHandler.read_only = False
 
 class AuthenticatedFileHandler(IPythonHandler, web.StaticFileHandler):
     """static files should only be accessible when logged in"""
@@ -251,7 +253,7 @@ class NewHandler(IPythonHandler):
 
         # default to defaultdir
         if backend is None:
-            backend = nbm.notebook_dirs[0] 
+            backend = nbm.notebook_dirs[0]
 
         notebook_id = nbm.new_notebook(backend=backend, name=name, public=public)
         self.render(
@@ -291,7 +293,7 @@ class NamedNotebookHandler(IPythonHandler):
 
         nb = nbm.mapping[notebook_id]
         notebook_path = nb.path
-        
+
         self.render(
             'notebook.html', project=project,
             notebook_id=notebook_id,
@@ -309,14 +311,14 @@ class PathedNotebookHandler(IPythonHandler):
 
     @authenticate_unless_readonly
     def get(self, notebook_path):
-        # haven't built a pathednotebook backend. 
+        # haven't built a pathednotebook backend.
         return
         nbm = self.application.notebook_manager
         project = nbm.notebook_dir
         notebook_id = nbm.get_pathed_notebook(notebook_path)
         if not notebook_id:
             raise web.HTTPError(404, u'Notebook does not exist: %s' % notebook_id)
-        
+
         self.render(
             'notebook.html', project=project,
             notebook_id=notebook_id,
@@ -339,7 +341,7 @@ class PrintNotebookHandler(IPythonHandler):
         project = nbm.notebook_dir
         if not nbm.notebook_exists(notebook_id):
             raise web.HTTPError(404, u'Notebook does not exist: %s' % notebook_id)
-        
+
         self.render(
             'printnotebook.html', project=project,
             notebook_id=notebook_id,
@@ -443,7 +445,7 @@ class ZMQStreamHandler(websocket.WebSocketHandler):
 
     def allow_draft76(self):
         """Allow draft 76, until browsers such as Safari update to RFC 6455.
-        
+
         This has been disabled by default in tornado in release 2.2.0, and
         support will be removed in later versions.
         """
@@ -562,10 +564,10 @@ class IOPubHandler(AuthenticatedZMQStreamHandler):
             self._hb_periodic_callback = ioloop.PeriodicCallback(ping_or_dead, self.time_to_dead*1000, loop)
             loop.add_timeout(time.time()+self.first_beat, self._really_start_hb)
             self._beating= True
-    
+
     def _really_start_hb(self):
         """callback for delayed heartbeat start
-        
+
         Only start the hb loop if we haven't been closed during the wait.
         """
         if self._beating and not self.hb_stream.closed():
@@ -699,7 +701,7 @@ class ActiveNotebooksHandler(IPythonHandler):
             f['kernel_id'] = km.kernel_for_notebook(f['notebook_id'])
             backend = nbm.backend_by_notebook_id(f['notebook_id'])
             f['project_path'] = backend.path
-        
+
         # active kernels
         files = [f for f in files if f['kernel_id'] is not None]
 
@@ -764,7 +766,7 @@ class NotebookHandler(IPythonHandler):
         nbm = self.application.notebook_manager
         format = self.get_argument('format', default='json')
         last_mod, name, data = nbm.get_notebook(notebook_id, format)
-        
+
         if format == u'json':
             self.set_header('Content-Type', 'application/json')
             self.set_header('Content-Disposition','attachment; filename="%s.ipynb"' % name)
