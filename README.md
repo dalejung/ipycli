@@ -5,8 +5,6 @@ With the merge of the multi-directory PR, ipycli is no longer compatible with `i
 
 The latest `master` is compatible with **`1.1.0`**
 
-So this project has largely become focused on using a GIST backend. The CLI stuff still exists, but it's not something I use. Should probably make a new project but, well, I'm a bum.
-
 INSTALL
 =======
 
