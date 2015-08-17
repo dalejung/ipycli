@@ -1,9 +1,7 @@
 WARNING
 =======
 
-With the merge of the multi-directory PR, ipycli is no longer compatible with `ipython` `master`. At this point, it seems easier to fork `ipython` or copy over `ipython/html` to a new repo and re-add the changes. Will update.
-
-The latest `master` is compatible with **`1.1.0`**
+This repo is deprecated in favor of `nbx`. Too much of the `IPython` internals have changed.
 
 INSTALL
 =======
